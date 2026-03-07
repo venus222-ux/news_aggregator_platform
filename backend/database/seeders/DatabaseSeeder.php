@@ -6,10 +6,12 @@ use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
         $this->call([
-            UserSeeder::class,
+            RoleSeeder::class,   // roles first
+            UserSeeder::class,   // normal users
+            AdminSeeder::class,  // admin last
         ]);
     }
 }

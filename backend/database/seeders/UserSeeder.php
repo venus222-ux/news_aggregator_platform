@@ -6,13 +6,14 @@ use Illuminate\Database\Seeder;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
-
 class UserSeeder extends Seeder
 {
     public function run()
     {
-        DB::table('users')->delete();
+        // Reset all normal users, but keep admin
+        DB::table('users')->where('email', '!=', 'admin@example.com')->truncate();
 
+        // Create normal users
         User::factory()->create([
             'name' => 'Alice Smith',
             'email' => 'alice@example.com',
@@ -31,7 +32,7 @@ class UserSeeder extends Seeder
             'password' => bcrypt('password123'),
         ]);
 
-        // More users via factory
+        // More normal users via factory
         User::factory(7)->create();
     }
 }

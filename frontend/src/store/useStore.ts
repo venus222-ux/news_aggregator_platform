@@ -4,8 +4,11 @@ import { refreshToken } from "../api";
 interface AppState {
   isAuth: boolean;
   token: string | null;
+  role: string | null;
   theme: "light" | "dark";
-  setIsAuth: (auth: boolean, token?: string) => void;
+
+  setAuth: (token: string, role: string) => void;
+  setIsAuth: (auth: boolean, token?: string, role?: string) => void;
   setToken: (token: string | null) => void;
   toggleTheme: () => void;
   startTokenRefreshLoop: () => void;
@@ -16,15 +19,44 @@ let refreshInterval: NodeJS.Timeout | null = null;
 export const useStore = create<AppState>((set, get) => ({
   isAuth: !!localStorage.getItem("token"),
   token: localStorage.getItem("token"),
+  role: localStorage.getItem("role"),
   theme: (localStorage.getItem("theme") as "light" | "dark") || "light",
 
-  setIsAuth: (auth, token) => {
+  // NEW: unified auth setter
+  setAuth: (token, role) => {
+    localStorage.setItem("token", token);
+    localStorage.setItem("role", role);
+
+    set({
+      isAuth: true,
+      token,
+      role,
+    });
+  },
+
+  setIsAuth: (auth, token, role) => {
     if (auth && token) {
       localStorage.setItem("token", token);
-      set({ isAuth: true, token });
+
+      if (role) {
+        localStorage.setItem("role", role);
+      }
+
+      set({
+        isAuth: true,
+        token,
+        role: role ?? get().role,
+      });
     } else {
       localStorage.removeItem("token");
-      set({ isAuth: false, token: null });
+      localStorage.removeItem("role");
+
+      set({
+        isAuth: false,
+        token: null,
+        role: null,
+      });
+
       if (refreshInterval) clearInterval(refreshInterval);
     }
   },
@@ -42,20 +74,25 @@ export const useStore = create<AppState>((set, get) => ({
   toggleTheme: () => {
     set((state) => {
       const newTheme = state.theme === "light" ? "dark" : "light";
+
       localStorage.setItem("theme", newTheme);
       document.documentElement.setAttribute("data-bs-theme", newTheme);
+
       return { theme: newTheme };
     });
   },
 
   startTokenRefreshLoop: () => {
     if (refreshInterval) return;
+
     refreshInterval = setInterval(
       async () => {
         if (!localStorage.getItem("token")) return;
+
         try {
           const res = await refreshToken();
           const newToken = res.data.token;
+
           get().setToken(newToken);
         } catch {
           get().setIsAuth(false);

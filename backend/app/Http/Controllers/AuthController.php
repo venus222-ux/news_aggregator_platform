@@ -9,27 +9,36 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Notifications\ResetPasswordNotification;
+use Spatie\Permission\Models\Role;
 
 class AuthController extends Controller
 {
     // --- REGISTER ---
     public function register(Request $request) {
-        $data = $request->validate([
-            'name' => 'required',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:6|confirmed',
-        ]);
 
-        $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => bcrypt($data['password']),
-        ]);
+    $data = $request->validate([
+        'name' => 'required',
+        'email' => 'required|email|unique:users',
+        'password' => 'required|min:6|confirmed',
+    ]);
 
-        $token = auth('api')->login($user);
+    $user = User::create([
+        'name' => $data['name'],
+        'email' => $data['email'],
+        'password' => bcrypt($data['password']),
+    ]);
 
-        return response()->json(['token' => $token]);
-    }
+    // assign default role
+    $user->assignRole('user');
+
+    $token = auth('api')->login($user);
+
+    return response()->json([
+        'token' => $token,
+        'role' => $user->getRoleNames()->first()
+    ]);
+}
+
 
     // --- LOGIN ---
     public function login(Request $request) {
@@ -43,10 +52,12 @@ class AuthController extends Controller
         $user = Auth::guard('api')->user();
         Cache::put("user-is-online-{$user->id}", true, now()->addMinutes(5));
 
+
         return response()->json([
-            'token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => auth('api')->factory()->getTTL() * 60
+          'token' => $token,
+          'role' => $user->getRoleNames()->first(),
+          'token_type' => 'bearer',
+          'expires_in' => auth('api')->factory()->getTTL() * 60
         ]);
     }
 

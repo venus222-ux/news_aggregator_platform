@@ -11,6 +11,8 @@ import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
 import { ToastContainer } from "react-toastify";
 import { useStore } from "./store/useStore";
+import AdminDashboard from "./pages/AdminDashboard";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const App = () => {
   const { theme, isAuth, startTokenRefreshLoop } = useStore();
@@ -28,11 +30,27 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route
           path="/login"
-          element={!isAuth ? <Login /> : <Navigate to="/dashboard" />}
+          element={
+            !isAuth ? (
+              <Login />
+            ) : useStore.getState().role === "admin" ? (
+              <Navigate to="/admin/dashboard" />
+            ) : (
+              <Navigate to="/dashboard" />
+            )
+          }
         />
         <Route
           path="/register"
-          element={!isAuth ? <Register /> : <Navigate to="/dashboard" />}
+          element={
+            !isAuth ? (
+              <Register />
+            ) : useStore.getState().role === "admin" ? (
+              <Navigate to="/admin/dashboard" />
+            ) : (
+              <Navigate to="/dashboard" />
+            )
+          }
         />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
@@ -47,6 +65,14 @@ const App = () => {
 
         {/* Catch-all route */}
         <Route path="*" element={<NotFound />} />
+        <Route
+          path="/admin/dashboard"
+          element={
+            <ProtectedRoute role="admin">
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
       <ToastContainer position="top-right" autoClose={3000} />
     </BrowserRouter>

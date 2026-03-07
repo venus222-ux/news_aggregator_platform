@@ -59,4 +59,10 @@ class User extends Authenticatable implements JWTSubject
     }
 
 
+    public function subscriptions()
+   {
+       return $this->belongsToMany(Category::class)->withTimestamps();
+    }
+
+
 }

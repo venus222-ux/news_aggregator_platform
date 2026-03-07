@@ -1,0 +1,258 @@
+/* Navbar.module.css */
+
+.navbar {
+  position: sticky;
+  top: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  transition:
+    background 0.3s ease,
+    box-shadow 0.3s ease;
+  z-index: 1000;
+  padding: 1rem 0;
+}
+
+.dark {
+  background: rgba(15, 23, 42, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.brand {
+  color: #1f2937;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s ease;
+}
+
+.brand i {
+  font-size: 1.75rem;
+  color: #6366f1;
+  margin-right: 0.5rem;
+}
+
+.dark .brand {
+  color: #f9fafb;
+}
+
+.dark .brand i {
+  color: #818cf8;
+}
+
+.toggler {
+  border: none;
+  background: transparent;
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 30px;
+  height: 21px;
+  cursor: pointer;
+  position: relative;
+}
+
+.bar {
+  height: 3px;
+  width: 100%;
+  background-color: #6366f1;
+  border-radius: 10px;
+  transition: all 0.3s ease-in-out;
+}
+
+.dark .bar {
+  background-color: #818cf8;
+}
+
+.toggler[aria-expanded="true"] .bar:nth-child(1) {
+  transform: rotate(45deg) translateY(10px) translateX(10px);
+}
+
+.toggler[aria-expanded="true"] .bar:nth-child(2) {
+  opacity: 0;
+}
+
+.toggler[aria-expanded="true"] .bar:nth-child(3) {
+  transform: rotate(-45deg) translateY(-10px) translateX(10px);
+}
+
+.navCollapse {
+  display: flex;
+  align-items: center;
+}
+
+.show {
+  display: flex;
+}
+
+.navItems {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.navBtn {
+  color: #4b5563;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.navBtn:hover {
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  transform: translateY(-2px);
+}
+
+.dark .navBtn {
+  color: #d1d5db;
+}
+
+.dark .navBtn:hover {
+  background: rgba(129, 140, 248, 0.1);
+  color: #818cf8;
+}
+
+.active {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: white !important;
+  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.25);
+}
+
+.active:hover {
+  transform: translateY(-2px);
+}
+
+.dark .active {
+  background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+  box-shadow: 0 4px 10px rgba(129, 140, 248, 0.25);
+}
+
+.themeBtn {
+  background: #f3f4f6;
+  color: #1f2937;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+  cursor: pointer;
+}
+
+.themeBtn:hover {
+  background: #e5e7eb;
+  transform: rotate(15deg) scale(1.1);
+}
+
+.dark .themeBtn {
+  background: #1e293b;
+  color: #facc15;
+}
+
+.dark .themeBtn:hover {
+  background: #334155;
+}
+
+.logoutBtn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  border-radius: 9999px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.logoutBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25);
+}
+
+.dark .logoutBtn {
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+}
+
+@media (max-width: 991px) {
+  .toggler {
+    display: flex;
+  }
+
+  .navCollapse {
+    display: block;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    border-radius: 0 0 1.5rem 1.5rem;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition:
+      max-height 0.3s ease-in-out,
+      opacity 0.3s ease-in-out;
+  }
+
+  .dark .navCollapse {
+    background: rgba(15, 23, 42, 0.98);
+  }
+
+  .show {
+    max-height: 500px;
+    opacity: 1;
+  }
+
+  .navItems {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .navBtn,
+  .themeBtn,
+  .logoutBtn {
+    width: 100%;
+    justify-content: center;
+    border-radius: 0.75rem;
+  }
+
+  .themeBtn {
+    width: 40px;
+    margin: 0 auto;
+  }
+}

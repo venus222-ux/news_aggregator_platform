@@ -1,0 +1,146 @@
+/* AdminDashboard.module.css */
+
+.dashboard {
+  background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
+  min-height: 100vh;
+  padding: 3rem 1.5rem;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 2.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.statCard {
+  background: white;
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  padding: 2rem;
+  text-align: center;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.statCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+.iconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  margin: 0 auto 1rem;
+  font-size: 1.75rem;
+}
+
+.statCard:nth-child(1) .iconWrapper {
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+}
+
+.statCard:nth-child(2) .iconWrapper {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.statCard:nth-child(3) .iconWrapper {
+  background: rgba(14, 165, 233, 0.1);
+  color: #0ea5e9;
+}
+
+.cardTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.cardText {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 1rem;
+}
+
+.cardBtn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.statCard:nth-child(1) .cardBtn {
+  border: 1px solid #6366f1;
+  color: #6366f1;
+}
+
+.statCard:nth-child(1) .cardBtn:hover {
+  background: #6366f1;
+  color: white;
+}
+
+.statCard:nth-child(2) .cardBtn {
+  border: 1px solid #22c55e;
+  color: #22c55e;
+}
+
+.statCard:nth-child(2) .cardBtn:hover {
+  background: #22c55e;
+  color: white;
+}
+
+.statCard:nth-child(3) .cardBtn {
+  border: 1px solid #0ea5e9;
+  color: #0ea5e9;
+}
+
+.statCard:nth-child(3) .cardBtn:hover {
+  background: #0ea5e9;
+  color: white;
+}
+
+.categoryCard {
+  background: white;
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.cardHeader {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.cardHeaderTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+.cardBody {
+  padding: 2rem;
+}

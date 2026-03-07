@@ -104,4 +104,11 @@ export const updateProfile = (data: ProfileUpdateRequest) =>
 export const deleteProfile = () => API.delete<APIMessageResponse>("/profile");
 export const refreshToken = () => API.post<LoginResponse>("/refresh");
 
+export const fetchCategories = () => API.get("/categories");
+export const fetchMySubscriptions = () => API.get("/subscriptions");
+export const subscribeCategory = (id: number) =>
+  API.post(`/categories/${id}/subscribe`);
+export const unsubscribeCategory = (id: number) =>
+  API.delete(`/categories/${id}/unsubscribe`);
+
 export default API;

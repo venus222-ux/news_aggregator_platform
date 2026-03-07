@@ -30,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // JWT alias 👇
         $middleware->alias([
             'auth.jwt' => \App\Http\Middleware\JwtMiddleware::class,
+            'admin' => \App\Http\Middleware\AdminMiddleware::class,
         ]);
     })
 

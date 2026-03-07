@@ -1,18 +1,19 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Login from "./pages/Login/Login";
+import Register from "./pages/Register/Register";
 import Dashboard from "./pages/Dashboard";
-import Profile from "./pages/Profile";
+import Profile from "./pages/Profile/Profile";
 import Home from "./pages/Home";
 import ForgotPassword from "./pages/ForgetPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
-import Navbar from "./components/Navbar";
+import Navbar from "./components/Navbar/Navbar";
 import { ToastContainer } from "react-toastify";
 import { useStore } from "./store/useStore";
-import AdminDashboard from "./pages/AdminDashboard";
+import AdminDashboard from "./pages/AdminDashboard/AdminDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+import CategoryList from "./components/CategoryList/CategoryList";
 
 const App = () => {
   const { theme, isAuth, startTokenRefreshLoop } = useStore();
@@ -72,6 +73,11 @@ const App = () => {
               <AdminDashboard />
             </ProtectedRoute>
           }
+        />
+
+        <Route
+          path="/categories"
+          element={isAuth ? <CategoryList /> : <Navigate to="/login" />}
         />
       </Routes>
       <ToastContainer position="top-right" autoClose={3000} />

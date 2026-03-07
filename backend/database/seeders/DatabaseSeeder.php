@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,   // roles first
             UserSeeder::class,   // normal users
             AdminSeeder::class,  // admin last
+            CategorySeeder::class,
         ]);
     }
 }

@@ -111,4 +111,12 @@ export const subscribeCategory = (id: number) =>
 export const unsubscribeCategory = (id: number) =>
   API.delete(`/categories/${id}/unsubscribe`);
 
+export const fetchSources = () => API.get("/admin/sources");
+
+export const createSource = (data: any) => API.post("/admin/sources", data);
+
+export const deleteSource = (id: number) => API.delete(`/admin/sources/${id}`);
+
+export const fetchNewsNow = () => API.post("/admin/fetch-news");
+
 export default API;

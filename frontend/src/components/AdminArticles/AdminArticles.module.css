@@ -1,0 +1,99 @@
+/* AdminArticles.module.css */
+
+.container {
+  padding: 1.5rem 0;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.fetchBtn {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: white;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  font-weight: 500;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.fetchBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.25);
+}
+
+.fetchBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.noArticles {
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.articleList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.articleItem {
+  background: white;
+  border-radius: 1rem;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.articleItem:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.articleContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.articleTitle {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #1f2937;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.articleTitle:hover {
+  color: #6366f1;
+}
+
+.articleMeta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.articleMeta span {
+  display: flex;
+  align-items: center;
+}

@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import AdminCategories from "../../components/AdminCategories/AdminCategories";
 import styles from "./AdminDashboard.module.css";
+import AdminSources from "../../components/AdminSources/AdminSources";
+import AdminArticles from "../../components/AdminArticles/AdminArticles";
 
 const AdminDashboard = () => {
   return (
@@ -44,7 +46,7 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      <div className={styles.categoryCard}>
+      <div className={styles.sectionCard}>
         <div className={styles.cardHeader}>
           <h4 className={styles.cardHeaderTitle}>
             <i className="bi bi-tags me-2"></i>Category Management
@@ -52,6 +54,28 @@ const AdminDashboard = () => {
         </div>
         <div className={styles.cardBody}>
           <AdminCategories />
+        </div>
+      </div>
+
+      <div className={styles.sectionCard}>
+        <div className={styles.cardHeader}>
+          <h4 className={styles.cardHeaderTitle}>
+            <i className="bi bi-rss me-2"></i>News Sources
+          </h4>
+        </div>
+        <div className={styles.cardBody}>
+          <AdminSources />
+        </div>
+      </div>
+
+      <div className={styles.sectionCard}>
+        <div className={styles.cardHeader}>
+          <h4 className={styles.cardHeaderTitle}>
+            <i className="bi bi-newspaper me-2"></i>Latest Articles
+          </h4>
+        </div>
+        <div className={styles.cardBody}>
+          <AdminArticles />
         </div>
       </div>
     </div>

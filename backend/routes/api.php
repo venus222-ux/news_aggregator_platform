@@ -1,9 +1,12 @@
 <?php
 
+use App\Http\Controllers\Admin\NewsController;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\Admin\SourceController;
 
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
@@ -32,15 +35,33 @@ Route::middleware(['auth:api', 'throttle:60,1'])->group(function () {
     Route::post('/categories/{category}/subscribe', [CategoryController::class, 'subscribe']);
     Route::delete('/categories/{category}/unsubscribe', [CategoryController::class, 'unsubscribe']);
 
+    //Article
+    Route::get('/articles', [ArticleController::class, 'index']); // user subscriptions
+    Route::get('/articles/all', [ArticleController::class, 'all']); // admin or explore
 
     Route::middleware(['admin'])->group(function () {
-        Route::get('/admin/dashboard', [AdminController::class, 'dashboard']);
 
-        //Category
-        Route::post('/categories', [CategoryController::class, 'store']);
-        Route::put('/categories/{category}', [CategoryController::class, 'update']);
-        Route::delete('/categories/{category}', [CategoryController::class, 'destroy']);
+      Route::get('/admin/dashboard', [AdminController::class, 'dashboard']);
+
+      // categories
+      Route::post('/categories', [CategoryController::class, 'store']);
+      Route::put('/categories/{category}', [CategoryController::class, 'update']);
+      Route::delete('/categories/{category}', [CategoryController::class, 'destroy']);
+
+      // news fetch
+      Route::post('/admin/fetch-news', [NewsController::class, 'fetchNow']);
+
+      // sources
+      Route::get('/admin/sources', [SourceController::class, 'index']);
+      Route::post('/admin/sources', [SourceController::class, 'store']);
+      Route::delete('/admin/sources/{source}', [SourceController::class, 'destroy']);
+
+      Route::get('/admin/latest-articles', [ArticleController::class, 'latestAdmin']);
+
     });
+
+
+
 });
 
 

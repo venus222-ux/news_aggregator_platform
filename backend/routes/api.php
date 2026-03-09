@@ -7,6 +7,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\Admin\SourceController;
+use App\Http\Controllers\FeedController;
 
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
@@ -27,6 +28,8 @@ Route::middleware(['auth:api', 'throttle:60,1'])->group(function () {
     Route::put('/profile', [AuthController::class, 'updateProfile']);
     Route::delete('/profile', [AuthController::class, 'destroyProfile']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
+    
+    Route::get('/feed/discover', [FeedController::class, 'discoverFeed']);
 
 
     //Category
@@ -38,6 +41,9 @@ Route::middleware(['auth:api', 'throttle:60,1'])->group(function () {
     //Article
     Route::get('/articles', [ArticleController::class, 'index']); // user subscriptions
     Route::get('/articles/all', [ArticleController::class, 'all']); // admin or explore
+
+    //personalized feed API for subscribed categories.
+    Route::get('/feed', [FeedController::class, 'index']);
 
     Route::middleware(['admin'])->group(function () {
 
@@ -59,6 +65,8 @@ Route::middleware(['auth:api', 'throttle:60,1'])->group(function () {
       Route::get('/admin/latest-articles', [ArticleController::class, 'latestAdmin']);
 
     });
+
+
 
 
 

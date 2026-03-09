@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Jobs\ProcessArticleJob;
 use App\Models\Source;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -10,73 +9,98 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
-use SimpleXMLElement;
 use Illuminate\Support\Facades\Log;
+use SimpleXMLElement;
 
 class FetchNewsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public $tries = 3; // Retry failed fetches
+    public $timeout = 120; // Prevent long hangs
 
     public function handle()
     {
         $sources = Source::all();
 
         foreach ($sources as $source) {
-            $articles = [];
+            $articles = $this->fetchArticlesFromSource($source);
 
-            if ($source->type === 'rss') {
-                // --- RSS Feed ---
-                try {
-                    $xmlContent = file_get_contents($source->url);
-                    if ($xmlContent) {
-                        $rss = new SimpleXMLElement($xmlContent);
-                        foreach ($rss->channel->item as $item) {
-                            $articles[] = [
-                                'title'       => (string) $item->title,
-                                'link'        => (string) $item->link,
-                                'description' => (string) $item->description,
-                                'pubDate'     => (string) $item->pubDate,
-                                'category'    => array_map('strval', iterator_to_array($item->category)),
-                                'source'      => $source->name,
-                                'content'     => (string) $item->children('content', true)->encoded ?? (string) $item->description,
-                            ];
-                        }
-                    }
-                } catch (\Exception $e) {
-                    Log::error("RSS fetch failed for {$source->name}: {$e->getMessage()}");
-                }
-            } elseif ($source->type === 'api') {
-                // --- JSON API ---
-                try {
-                    $response = Http::get($source->url, $source->api_key ? ['api_key' => $source->api_key] : []);
-                    if ($response->ok()) {
-                        $json = $response->json();
-
-                        // Example: Reddit JSON structure
-                        if (isset($json['data']['children'])) {
-                            foreach ($json['data']['children'] as $item) {
-                                $data = $item['data'];
-                                $articles[] = [
-                                    'title'       => $data['title'] ?? null,
-                                    'link'        => 'https://reddit.com' . ($data['permalink'] ?? ''),
-                                    'description' => $data['selftext'] ?? null,
-                                    'pubDate'     => isset($data['created_utc']) ? date('r', $data['created_utc']) : null,
-                                    'category'    => [$data['subreddit'] ?? 'Reddit'],
-                                    'source'      => $source->name,
-                                    'content'     => $data['selftext'] ?? null,
-                                ];
-                            }
-                        }
-                    }
-                } catch (\Exception $e) {
-                    Log::error("API fetch failed for {$source->name}: {$e->getMessage()}");
-                }
-            }
-
-            // --- Dispatch processing jobs ---
             foreach ($articles as $article) {
-                ProcessArticleJob::dispatch($article);
+                ProcessArticleJob::dispatch($article)->onQueue('processing');
             }
         }
+    }
+
+    private function fetchArticlesFromSource(Source $source): array
+    {
+        $articles = [];
+
+        try {
+            if ($source->type === 'rss') {
+                $xmlContent = file_get_contents($source->url);
+                if (!$xmlContent) return [];
+
+                $rss = new SimpleXMLElement($xmlContent);
+                foreach ($rss->channel->item as $item) {
+                    $articles[] = [
+                        'title' => (string) $item->title,
+                        'description' => (string) $item->description,
+                        'content' => (string) $item->children('content', true)->encoded ?? (string) $item->description,
+                        'url' => (string) $item->link,
+                        'published_at' => (string) $item->pubDate,
+                        'category' => array_map('strval', iterator_to_array($item->category ?? [])),
+                        'source' => $source->name,
+                        'raw' => json_decode(json_encode($item), true),
+                    ];
+                }
+            } elseif ($source->type === 'api') {
+                $params = $source->api_key ? ['apiKey' => $source->api_key] : [];
+                $response = Http::timeout(30)->get($source->url, $params);
+
+                if (!$response->ok()) {
+                    throw new \Exception('API request failed: ' . $response->status());
+                }
+
+                $json = $response->json();
+
+                // Handle NewsAPI structure
+                if (isset($json['articles'])) {
+                    foreach ($json['articles'] as $item) {
+                        $articles[] = [
+                            'title' => $item['title'] ?? null,
+                            'description' => $item['description'] ?? null,
+                            'content' => $item['content'] ?? null,
+                            'url' => $item['url'] ?? null,
+                            'published_at' => $item['publishedAt'] ?? null,
+                            'category' => [$item['category'] ?? 'General'], // Adjust per API
+                            'source' => $item['source']['name'] ?? $source->name,
+                            'raw' => $item,
+                        ];
+                    }
+                }
+
+                // Handle Reddit structure
+                if (isset($json['data']['children'])) {
+                    foreach ($json['data']['children'] as $child) {
+                        $data = $child['data'];
+                        $articles[] = [
+                            'title' => $data['title'] ?? null,
+                            'description' => $data['selftext'] ?? null,
+                            'content' => $data['selftext'] ?? null,
+                            'url' => 'https://reddit.com' . ($data['permalink'] ?? ''),
+                            'published_at' => date('r', $data['created_utc'] ?? time()),
+                            'category' => [$data['subreddit'] ?? 'Reddit'],
+                            'source' => $source->name,
+                            'raw' => $data,
+                        ];
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error("Fetch failed for source {$source->name}: {$e->getMessage()}");
+        }
+
+        return $articles;
     }
 }

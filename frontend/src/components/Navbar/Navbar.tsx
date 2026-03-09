@@ -58,6 +58,16 @@ export default function Navbar() {
               <i className="bi bi-person-circle me-1"></i>Profile
             </Link>
 
+            <Link
+              className={`${styles.navBtn} ${
+                location.pathname === "/feed" ? styles.active : ""
+              }`}
+              to="/feed"
+              onClick={closeMenu}
+            >
+              <i className="bi bi-newspaper me-1"></i>Feed
+            </Link>
+
             {isAuth && (
               <Link
                 className={`${styles.navBtn} ${isActive("/categories") ? styles.active : ""}`}

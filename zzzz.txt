@@ -1,15 +1,21 @@
-Day 1 and Day 2 completed Auth + Roles,
+Day 1 - 2 completed Auth + Roles,
 Day 3 - Categories & Subscriptions,
 Day 4 - News Source Integration.
 Day 5 – Article Processing & Normalization
+Day 6 - 9 Personalized News Feed API, 
+          Redis Caching Layer,React Feed Page + Infinite Scroll,
+         Article UI & Source Information
 
 Next:
-Day 6 – Personalized News Feed API
+🟢 Day 13 – Search Articles (Elasticsearch Optional)
 
 .....
 
-php artisan queue:work
+php artisan queue:work --queue=processing,default
 Inside tinker: dispatch(new App\Jobs\FetchNewsJob());
+                //Test Cache
+               Cache::tags(['test'])->get('foo');
+               Cache::tags(['test'])->put('foo','bar',60);
 
 ..
 

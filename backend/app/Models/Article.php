@@ -10,26 +10,15 @@ class Article extends Model
     protected $collection = 'articles';
 
     protected $fillable = [
-        'title',
-        'description',
-        'content',
-        'url',
-        'source',
-        'published_at',
-        'category_id', // stores the ObjectId of the category
-        'raw',
+        'title', 'description', 'content', 'url', 'source', 'published_at', 'category_id', 'raw', 'hash',
     ];
 
     protected $casts = [
         'published_at' => 'datetime',
     ];
 
-    /**
-     * Category relationship
-     */
     public function category()
     {
-        // Ensure correct relation with MongoDB ObjectId
-        return $this->belongsTo(Category::class, 'category_id', '_id');
+        return $this->belongsTo(Category::class, 'category_id');
     }
 }

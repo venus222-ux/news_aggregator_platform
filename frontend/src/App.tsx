@@ -14,6 +14,7 @@ import { useStore } from "./store/useStore";
 import AdminDashboard from "./pages/AdminDashboard/AdminDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CategoryList from "./components/CategoryList/CategoryList";
+import FeedPage from "./pages/FeedPage";
 
 const App = () => {
   const { theme, isAuth, startTokenRefreshLoop } = useStore();
@@ -63,9 +64,6 @@ const App = () => {
           path="/profile"
           element={isAuth ? <Profile /> : <Navigate to="/login" />}
         />
-
-        {/* Catch-all route */}
-        <Route path="*" element={<NotFound />} />
         <Route
           path="/admin/dashboard"
           element={
@@ -74,12 +72,21 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/categories"
           element={isAuth ? <CategoryList /> : <Navigate to="/login" />}
         />
+
+        {/* ✅ Feed route must be inside Routes */}
+        <Route
+          path="/feed"
+          element={isAuth ? <FeedPage /> : <Navigate to="/login" />}
+        />
+
+        {/* Catch-all route */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
+
       <ToastContainer position="top-right" autoClose={3000} />
     </BrowserRouter>
   );

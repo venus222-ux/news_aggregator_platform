@@ -1,0 +1,42 @@
+## News Aggregator Help File
+
+### How It Works
+
+1. **Admin Adds Sources & Categories**
+   - Admin defines news sources (API or RSS) and categories (Sports, Tech, etc.).
+   - Stored in database (`Source` and `Category` models).
+
+2. **Admin Triggers News Fetch**
+   - Clicks the **Fetch News** button (`/admin/fetch-news`).
+   - This triggers a background job `FetchNewsJob`.
+
+3. **Fetching News**
+   - `FetchNewsJob` calls `NewsFetchService`.
+   - `NewsFetchService` fetches articles from all sources (API or RSS).
+
+4. **Processing Articles**
+   - Each article is sent to `ProcessArticleJob`.
+   - `ArticleProcessorService`:
+     - Checks for duplicates (by URL)
+     - Normalizes data (title, content, description)
+     - Detects category automatically
+     - Saves the article in MongoDB
+
+5. **User Views Articles**
+   - User goes to `/articles`.
+   - `ArticleController@index` fetches articles for **subscribed categories** only.
+
+6. **User Subscriptions**
+   - Users can subscribe or unsubscribe categories.
+   - Frontend buttons update Zustand store state.
+
+7. **Frontend Updates**
+   - Components like `CategoryList` reactively update based on subscriptions.
+
+### Key Notes
+
+- **Automatic Updates:** News articles are added automatically in MongoDB when the fetch job runs.
+- **Async Processing:** Jobs ensure fetching and processing don’t block the main app.
+- **Subscriptions:** Users only see articles from categories they follow.
+
+### Quick Flow

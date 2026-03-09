@@ -1,0 +1,51 @@
+1️⃣ Backend Overview
+Models
+User → Has JWT auth, Spatie roles (admin/user), subscriptions (belongsToMany Category)
+Category → Stores news categories; tracks subscribers
+Source → Stores news sources (API or RSS)
+Article → MongoDB collection for articles; belongs to Category; stores raw data for reference
+
+Jobs
+FetchNewsJob → Loops sources → fetches RSS or API → dispatches ProcessArticleJob
+ProcessArticleJob → Deduplicates → assigns category → saves article in MongoDB
+Async ensures UI/backend isn’t blocked
+
+Services
+NewsFetchService → Handles API/RSS fetch logic
+ArticleProcessorService → Normalizes data, detects category
+
+Controllers
+ArticleController → /articles (user feed), /articles/all (explore/admin), /latestAdmin
+CategoryController → CRUD for admin, subscribe/unsubscribe for users
+SourceController → Admin source management
+NewsController → Trigger news fetch (/admin/fetch-news)
+
+Routes
+Auth routes: /login, /register, /forgot-password, /reset-password
+Protected: /me, /profile, /dashboard
+Admin-only: /admin/dashboard, /categories, /admin/fetch-news, /admin/sources, /admin/latest-articles
+
+2️⃣ Frontend Overview
+Pages
+Home → Login/Register prompt
+Dashboard → User dashboard
+AdminDashboard → Admin overview with categories, sources, latest article
+CategoryList → Manage subscriptions
+
+Components
+AdminCategories, AdminSources, AdminArticles
+ArticleCard → UI for individual articles
+FeedPage → Infinite scroll feed (planned in Day 8)
+
+Zustand Stores
+useCategoryStore → Categories + subscriptions; handles admin CRUD
+useSubscriptionStore → Quick local state for subscribed categories
+useFeedStore → (planned) will handle articles + infinite scroll
+
+
+3️⃣ Workflow Summary
+Admin adds sources & categories → saved in MySQL
+Admin triggers news fetch → queued job fetches from API/RSS → ProcessArticleJob saves in MongoDB
+Users subscribe to categories → Zustand keeps track
+Articles displayed → only user’s subscribed categories; optional infinite scroll
+Redis caching (Day 7) → reduces DB queries, auto-invalidated when new articles arrive or subscriptions change

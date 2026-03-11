@@ -61,7 +61,7 @@ class FeedController extends Controller
     $subscriptions = $user->subscriptions()->pluck('category_id');
 
     $articles = Article::whereNotIn('category_id', $subscriptions)
-        ->orderBy('published_at','desc')
+        ->orderBy('score','desc')
         ->limit(20)
         ->get();
 

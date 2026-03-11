@@ -2,57 +2,52 @@ Day 1 - 2 completed Auth + Roles,
 Day 3 - Categories & Subscriptions,
 Day 4 - News Source Integration.
 Day 5 – Article Processing & Normalization
-Day 6 - 9 Personalized News Feed API, 
-          Redis Caching Layer,React Feed Page + Infinite Scroll,
-         Article UI & Source Information
+Day 6 - Personalized News Feed API, 
+Day 7 - Redis Caching Layer,React Feed Page + Infinite Scroll,
+Day 8 – React Feed Page + Infinite Scroll
+Day 9 - Article UI & Source Information
+Day 10 - Admin Source Management,
+Day 11 - Automatic News Fetch Scheduler,   
+Day 12 - Reddit Integration  
+Day 13 - Search + filters 
+Day 14 - Real-time (Echo) – 30 min, efect wow maxim
 
 Next:
-🟢 Day 13 – Search Articles (Elasticsearch Optional)
+🟢 Twitter/X support – completează cerința inițială
+🟢 Smart caching + analytics
+🟢 Supervisor
 
-.....
+🟢 Testing
+🟢 AI
 
-php artisan queue:work --queue=processing,default
-Inside tinker: dispatch(new App\Jobs\FetchNewsJob());
-                //Test Cache
-               Cache::tags(['test'])->get('foo');
-               Cache::tags(['test'])->put('foo','bar',60);
 
-..
+RUN CMD:
+php artisan queue:work --queue=default
+php artisan queue:work --queue=processing
 
-FLOW:
-┌───────────────────────────┐
-│ Admin triggers fetch │
-│ /admin/news/fetch-now │
-└─────────────┬────────────┘
-│
-▼
-┌───────────────────────────┐
-│ NewsController@fetchNow() │
-│ - Dispatch FetchNewsJob │
-└─────────────┬────────────┘
-│
-▼
-┌───────────────────────────┐
-│ FetchNewsJob (Queue) │
-│ - Runs asynchronously │
-│ - Calls NewsFetchService │
-└─────────────┬────────────┘
-│
-▼
-┌───────────────────────────┐
-│ NewsFetchService │
-│ - fetchAll() │
-│ ├─ Fetch API sources │
-│ │ - HTTP request │
-│ │ - Dispatch ProcessArticleJob per article
-│ └─ Fetch RSS sources │
-│ - Parse XML │
-│ - Dispatch ProcessArticleJob per article
-└─────────────┬────────────┘
-│
-▼
-┌───────────────────────────┐
-│ ProcessArticleJob (Queue)│
-│ - Save article to DB │
-│ - Optional analysis, tags │
-└───────────────────────────┘
+php artisan queue:failed  //Check failed jobs
+
+php artisan schedule:work
+
+//Check logs
+storage/logs/laravel.log
+
+
+//Check Redis queue
+redis-cli
+keys *
+
+
+Inside tinker: 
+dispatch(new App\Jobs\FetchNewsJob());
+
+//Check database after Jobs
+App\Models\Article::count()
+
+//Test Cache
+Cache::tags(['test'])->get('foo');
+Cache::tags(['test'])->put('foo','bar',60);
+
+ES + SCOUT
+http://localhost:9200/articles_index/_search
+Tinker: App\Models\Article::search("AI")->get();

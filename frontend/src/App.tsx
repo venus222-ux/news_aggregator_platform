@@ -15,6 +15,7 @@ import AdminDashboard from "./pages/AdminDashboard/AdminDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CategoryList from "./components/CategoryList/CategoryList";
 import FeedPage from "./pages/FeedPage";
+import SearchPage from "./pages/SearchPage";
 
 const App = () => {
   const { theme, isAuth, startTokenRefreshLoop } = useStore();
@@ -81,6 +82,12 @@ const App = () => {
         <Route
           path="/feed"
           element={isAuth ? <FeedPage /> : <Navigate to="/login" />}
+        />
+
+        {/* ✅ Search */}
+        <Route
+          path="/search"
+          element={isAuth ? <SearchPage /> : <Navigate to="/login" />}
         />
 
         {/* Catch-all route */}

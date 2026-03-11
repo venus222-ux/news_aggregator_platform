@@ -119,4 +119,6 @@ export const deleteSource = (id: number) => API.delete(`/admin/sources/${id}`);
 
 export const fetchNewsNow = () => API.post("/admin/fetch-news");
 
+export const searchArticles = (q: string) => API.get(`/articles/search?q=${q}`);
+
 export default API;

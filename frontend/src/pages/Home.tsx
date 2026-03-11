@@ -1,3 +1,4 @@
+// Home.tsx  (updated with modern CSS Modules styling + consistent grid)
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useStore } from "../store/useStore";
@@ -5,29 +6,28 @@ import { useFeedStore } from "../store/useFeedStore";
 import { useCategoryStore } from "../store/useCategoryStore";
 import ArticleCard from "../components/ArticleCard";
 import API from "../api";
+import styles from "./Home.module.css";
 
 const Home = () => {
   const { isAuth } = useStore();
 
-  // Personalized Feed (subscribed categories)
+  // Personalized Feed
   const { articles, fetchFeed, nextCursor, loading } = useFeedStore();
   const loaderRef = useRef<HTMLDivElement>(null);
 
-  // Discover / Follow section
+  // Discover
   const [discoverArticles, setDiscoverArticles] = useState<any[]>([]);
   const [discoverLoading, setDiscoverLoading] = useState(false);
 
-  // Category store
   const { subscriptions, subscribe } = useCategoryStore();
-
-  // Local state for instant follow feedback
   const [localFollowed, setLocalFollowed] = useState<number[]>([]);
 
-  // --- Load personalized feed ---
+  // Load personalized feed
   useEffect(() => {
     if (isAuth) fetchFeed();
   }, [isAuth]);
 
+  // Infinite scroll observer
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -37,15 +37,13 @@ const Home = () => {
       },
       { threshold: 1 },
     );
-
     if (loaderRef.current) observer.observe(loaderRef.current);
-
     return () => {
       if (loaderRef.current) observer.unobserve(loaderRef.current);
     };
   }, [nextCursor, loading]);
 
-  // --- Load Discover / Follow section ---
+  // Discover feed
   const fetchDiscover = async () => {
     setDiscoverLoading(true);
     try {
@@ -62,113 +60,136 @@ const Home = () => {
     fetchDiscover();
   }, []);
 
-  // Handle follow category with instant feedback
   const handleFollow = async (categoryId: number) => {
     if (
       subscriptions.includes(categoryId) ||
       localFollowed.includes(categoryId)
     )
       return;
+
     try {
-      // Optimistically update local state
       setLocalFollowed([...localFollowed, categoryId]);
       await subscribe(categoryId);
     } catch (err) {
       console.error(err);
-      // Rollback if error
       setLocalFollowed(localFollowed.filter((id) => id !== categoryId));
     }
   };
 
   return (
-    <div className="container mt-5">
-      <h1 className="mb-3 text-center">🏡 Welcome to the Home Page</h1>
+    <div className={styles.homePage}>
+      <div className={styles.hero}>
+        <h1 className={styles.heroTitle}>🏡 Welcome back!</h1>
+        <p className={styles.heroSubtitle}>Your personal news universe</p>
+      </div>
 
       {!isAuth ? (
-        <>
-          <p className="lead text-center">
-            Please log in or register to access your personalized feed.
+        <div className={styles.authPrompt}>
+          <p className={styles.lead}>
+            Please log in or register to unlock your personalized feed and
+            discover amazing content.
           </p>
-          <div className="d-flex justify-content-center gap-3 mt-4">
-            <Link className="btn btn-primary" to="/login">
+          <div className={styles.authButtons}>
+            <Link className={styles.btnPrimary} to="/login">
               🔑 Login
             </Link>
-            <Link className="btn btn-secondary" to="/register">
+            <Link className={styles.btnSecondary} to="/register">
               📝 Register
             </Link>
           </div>
-        </>
+        </div>
       ) : (
         <>
-          {/* Personalized Feed Section */}
-          <h2 className="mb-4 text-center">📰 Your Personalized Feed</h2>
-          {articles.length === 0 && !loading && (
-            <p className="text-center">
-              No articles found in your subscribed categories.
-            </p>
-          )}
-          {articles.map((a) => (
-            <ArticleCard key={a._id} article={a} />
-          ))}
-          <div ref={loaderRef} className="text-center my-4">
-            {loading
-              ? "Loading..."
-              : nextCursor
-                ? "Scroll to load more"
-                : articles.length
-                  ? "No more articles"
-                  : ""}
-          </div>
+          {/* Personalized Feed */}
+          <section className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <h2 className={styles.sectionTitle}>📰 Your Personalized Feed</h2>
+              <p className={styles.sectionDesc}>
+                Based on categories you follow
+              </p>
+            </div>
 
-          {/* Discover & Follow Section */}
-          <h2 className="mb-4 mt-5 text-center">🌟 Discover & Follow</h2>
-          {discoverLoading ? (
-            <p className="text-center">Loading...</p>
-          ) : discoverArticles.length === 0 ? (
-            <p className="text-center">No articles to discover.</p>
-          ) : (
-            discoverArticles
-              // Filter out categories the user already follows
-              .filter((a) => {
-                const categoryId = Number(a.category_id || 0);
-                return (
-                  categoryId &&
-                  !subscriptions.includes(categoryId) &&
-                  !localFollowed.includes(categoryId)
-                );
-              })
-              .map((a) => {
-                const categoryId = Number(a.category_id || 0);
-                const isFollowed =
-                  subscriptions.includes(categoryId) ||
-                  localFollowed.includes(categoryId);
+            {articles.length === 0 && !loading && (
+              <div className={styles.emptyState}>
+                No articles yet. Start following categories below!
+              </div>
+            )}
 
-                return (
-                  <div key={a._id} className="mb-3">
-                    <ArticleCard article={a} />
-                    {categoryId && (
-                      <button
-                        className={`btn btn-sm mt-2 ${
-                          isFollowed ? "btn-success" : "btn-outline-success"
-                        }`}
-                        onClick={() => handleFollow(categoryId)}
-                        disabled={isFollowed}
-                      >
-                        <i className="bi bi-bell me-1"></i>
-                        {isFollowed ? "Subscribed" : "Follow Category"}
-                      </button>
-                    )}
-                  </div>
-                );
-              })
-          )}
+            <div className={styles.articleGrid}>
+              {articles.map((a) => (
+                <ArticleCard key={a._id} article={a} />
+              ))}
+            </div>
 
-          <div className="text-center mt-4">
-            <Link className="btn btn-success me-2" to="/dashboard">
+            <div ref={loaderRef} className={styles.infiniteLoader}>
+              {loading
+                ? "Loading more stories..."
+                : nextCursor
+                  ? "Scroll for more"
+                  : "You've reached the end ✨"}
+            </div>
+          </section>
+
+          {/* Discover & Follow */}
+          <section className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <h2 className={styles.sectionTitle}>🌟 Discover & Follow</h2>
+              <p className={styles.sectionDesc}>
+                Find new categories from trending stories
+              </p>
+            </div>
+
+            {discoverLoading ? (
+              <div className={styles.loading}>
+                Finding fresh stories for you...
+              </div>
+            ) : discoverArticles.length === 0 ? (
+              <div className={styles.emptyState}>
+                No new stories to discover right now.
+              </div>
+            ) : (
+              <div className={styles.articleGrid}>
+                {discoverArticles
+                  .filter((a) => {
+                    const categoryId = Number(a.category_id || 0);
+                    return (
+                      categoryId &&
+                      !subscriptions.includes(categoryId) &&
+                      !localFollowed.includes(categoryId)
+                    );
+                  })
+                  .map((a) => {
+                    const categoryId = Number(a.category_id || 0);
+                    const isFollowed =
+                      subscriptions.includes(categoryId) ||
+                      localFollowed.includes(categoryId);
+
+                    return (
+                      <div key={a._id} className={styles.discoverCard}>
+                        <ArticleCard article={a} />
+                        {categoryId && (
+                          <button
+                            className={`${styles.followBtn} ${isFollowed ? styles.followed : ""}`}
+                            onClick={() => handleFollow(categoryId)}
+                            disabled={isFollowed}
+                          >
+                            <i className="bi bi-bell me-2"></i>
+                            {isFollowed ? "✓ Subscribed" : "Follow Category"}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </section>
+
+          <div className={styles.footerLinks}>
+            <Link className={styles.bigBtn} to="/dashboard">
               🚀 Go to Dashboard
             </Link>
-            <Link className="btn btn-primary" to="/feed">
-              📰 Go to Full Feed
+            <Link className={styles.bigBtn} to="/feed">
+              📰 View Full Feed
             </Link>
           </div>
         </>

@@ -55,5 +55,21 @@ class ArticleController extends Controller
     return response()->json($articles);
 }
 
+public function search(Request $request)
+{
+    $query = $request->get('q');
+
+    if (!$query) {
+        return response()->json([]);
+    }
+
+    $articles = Article::search($query)
+        ->take(20)
+        ->get();
+
+    return response()->json($articles);
+}
+
+
 
 }

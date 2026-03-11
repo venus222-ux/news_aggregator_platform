@@ -49,3 +49,45 @@ Admin triggers news fetch → queued job fetches from API/RSS → ProcessArticle
 Users subscribe to categories → Zustand keeps track
 Articles displayed → only user’s subscribed categories; optional infinite scroll
 Redis caching (Day 7) → reduces DB queries, auto-invalidated when new articles arrive or subscriptions change
+
+
+
+
+
+FLOW:
+┌───────────────────────────┐
+│ Admin triggers fetch │
+│ /admin/news/fetch-now │
+└─────────────┬────────────┘
+│
+▼
+┌───────────────────────────┐
+│ NewsController@fetchNow() │
+│ - Dispatch FetchNewsJob │
+└─────────────┬────────────┘
+│
+▼
+┌───────────────────────────┐
+│ FetchNewsJob (Queue) │
+│ - Runs asynchronously │
+│ - Calls NewsFetchService │
+└─────────────┬────────────┘
+│
+▼
+┌───────────────────────────┐
+│ NewsFetchService │
+│ - fetchAll() │
+│ ├─ Fetch API sources │
+│ │ - HTTP request │
+│ │ - Dispatch ProcessArticleJob per article
+│ └─ Fetch RSS sources │
+│ - Parse XML │
+│ - Dispatch ProcessArticleJob per article
+└─────────────┬────────────┘
+│
+▼
+┌───────────────────────────┐
+│ ProcessArticleJob (Queue)│
+│ - Save article to DB │
+│ - Optional analysis, tags │
+└───────────────────────────┘

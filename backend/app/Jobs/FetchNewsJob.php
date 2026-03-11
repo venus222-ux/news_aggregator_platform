@@ -19,6 +19,7 @@ class FetchNewsJob implements ShouldQueue
     public $tries = 3; // Retry failed fetches
     public $timeout = 120; // Prevent long hangs
 
+
     public function handle()
     {
         $sources = Source::all();
@@ -27,7 +28,8 @@ class FetchNewsJob implements ShouldQueue
             $articles = $this->fetchArticlesFromSource($source);
 
             foreach ($articles as $article) {
-                ProcessArticleJob::dispatch($article)->onQueue('processing');
+                ProcessArticlesBatchJob::dispatch($articles)
+                 ->onQueue('processing');
             }
         }
     }

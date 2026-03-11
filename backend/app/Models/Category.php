@@ -15,4 +15,8 @@ class Category extends Model
     {
         return $this->belongsToMany(User::class)->withTimestamps();
     }
+
+    protected $casts = [
+       'keywords' => 'array',
+    ];
 }

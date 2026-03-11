@@ -1,3 +1,45 @@
+
+Architecture:
+Laravel 12
+JWT Auth
+Spatie Permissions
+MongoDB (articles)
+MySQL (users, categories)
+Redis (feed cache)
+
+Queue System
+   FetchNewsJob
+   ProcessArticlesBatchJob
+   CalculateArticleScoreJob
+      Score formula:
+         score =
+         log10(views + 1)
+         + (timestamp - epoch) / 45000
+
+External APIs
+   NewsAPI
+   Reddit
+   RSS feeds
+
+React + Zustand
+Axios API
+Infinite Scroll
+
+
+
+
+API aggregation
+Queue processing
+Redis caching
+MongoDB storage
+Infinite scrolling
+JWT authentication
+Elasticsearch search
+React + Zustand frontend
+
+
+
+
 ## News Aggregator Help File
 
 ### How It Works

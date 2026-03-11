@@ -106,26 +106,20 @@ private function normalizeData(array $data): array
 
     foreach ($categories as $category) {
 
-        $keywords = explode(' ', strtolower($category->name));
+        // keywords column from database
+        $keywords = $category->keywords ?? [];
+
+        // if stored as JSON string convert to array
+        if (is_string($keywords)) {
+            $keywords = json_decode($keywords, true);
+        }
 
         foreach ($keywords as $keyword) {
 
-            if (strlen($keyword) < 3) continue;
-
-            if (str_contains($text, $keyword)) {
+            if (str_contains($text, strtolower($keyword))) {
                 return $category->id;
             }
         }
-    }
-
-    // fallback using API tags
-    foreach ($data['category'] as $tag) {
-
-        $category = Category::whereRaw(
-            'LOWER(name) = ?', [strtolower($tag)]
-        )->first();
-
-        if ($category) return $category->id;
     }
 
     return null;

@@ -2,23 +2,30 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useStore } from "../../store/useStore";
 import styles from "./Navbar.module.css";
 import { useState } from "react";
+import SearchDropdown from "../SearchDropdown";
 
 export default function Navbar() {
   const { isAuth, setIsAuth, theme, toggleTheme } = useStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [expanded, setExpanded] = useState(false);
+  const [query, setQuery] = useState("");
 
   const handleLogout = () => {
     setIsAuth(false);
     navigate("/login");
     setExpanded(false);
   };
-
   const closeMenu = () => setExpanded(false);
-
-  // Helper to check if a path is active
   const isActive = (path: string) => location.pathname === path;
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+    navigate(`/search?q=${encodeURIComponent(query)}`);
+    setQuery("");
+    setExpanded(false);
+  };
 
   return (
     <nav className={`${styles.navbar} ${theme === "dark" ? styles.dark : ""}`}>
@@ -28,6 +35,47 @@ export default function Navbar() {
           <span>Messenger</span>
         </Link>
 
+        {/* ==================== MODERN SEARCH BAR ==================== */}
+        {isAuth && (
+          <div className={styles.searchWrapper}>
+            <form className={styles.searchForm} onSubmit={handleSearch}>
+              <div className={styles.searchBar}>
+                <i className={styles.searchIcon}>
+                  <i className="bi bi-search"></i>
+                </i>
+
+                <input
+                  type="text"
+                  placeholder="Search articles & news..."
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className={styles.searchInput}
+                />
+
+                {query && (
+                  <button
+                    type="button"
+                    className={styles.clearBtn}
+                    onClick={() => setQuery("")}
+                    aria-label="Clear"
+                  >
+                    <i className="bi bi-x-lg"></i>
+                  </button>
+                )}
+
+                <button
+                  type="submit"
+                  className={styles.searchSubmit}
+                  aria-label="Search"
+                >
+                  <i className="bi bi-arrow-right"></i>
+                </button>
+              </div>
+            </form>
+
+            <SearchDropdown query={query} onClose={() => setQuery("")} />
+          </div>
+        )}
         <button
           className={styles.toggler}
           type="button"
@@ -44,14 +92,19 @@ export default function Navbar() {
         <div className={`${styles.navCollapse} ${expanded ? styles.show : ""}`}>
           <div className={styles.navItems}>
             <Link
-              className={`${styles.navBtn} ${isActive("/dashboard") ? styles.active : ""}`}
+              className={`${styles.navBtn} ${
+                isActive("/dashboard") ? styles.active : ""
+              }`}
               to="/dashboard"
               onClick={closeMenu}
             >
               <i className="bi bi-house-door me-1"></i>Dashboard
             </Link>
+
             <Link
-              className={`${styles.navBtn} ${isActive("/profile") ? styles.active : ""}`}
+              className={`${styles.navBtn} ${
+                isActive("/profile") ? styles.active : ""
+              }`}
               to="/profile"
               onClick={closeMenu}
             >
@@ -70,7 +123,9 @@ export default function Navbar() {
 
             {isAuth && (
               <Link
-                className={`${styles.navBtn} ${isActive("/categories") ? styles.active : ""}`}
+                className={`${styles.navBtn} ${
+                  isActive("/categories") ? styles.active : ""
+                }`}
                 to="/categories"
                 onClick={closeMenu}
               >

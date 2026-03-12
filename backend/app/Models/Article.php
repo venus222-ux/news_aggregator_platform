@@ -21,11 +21,24 @@ class Article extends Model
         'published_at',
         'category_id',
         'raw',
-        'hash'
+        'hash',
+        'views',    // new field
+        'clicks',   // new field
+        'score',    // new field
+    ];
+
+    // Default values for new fields
+    protected $attributes = [
+        'views' => 0,
+        'clicks' => 0,
+        'score' => 0,
     ];
 
     protected $casts = [
         'published_at' => 'datetime',
+        'views' => 'integer',
+        'clicks' => 'integer',
+        'score' => 'float',
     ];
 
     public function searchableAs()

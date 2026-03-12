@@ -7,6 +7,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\Admin\SourceController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\FeedController;
 
 // Public routes
@@ -31,6 +32,7 @@ Route::middleware(['auth:api', 'throttle:60,1'])->group(function () {
     Route::post('/refresh', [AuthController::class, 'refresh']);
 
     Route::get('/feed/discover', [FeedController::class, 'discoverFeed']);
+
 
 
     //Category
@@ -69,6 +71,10 @@ Route::middleware(['auth:api', 'throttle:60,1'])->group(function () {
     Route::get('/admin/latest-articles', [ArticleController::class, 'latestAdmin']);
 });
 
+Route::middleware('auth:api')->group(function () {
+    Route::get('/notifications/unread', [NotificationController::class, 'unreadCount']);
+    Route::post('/notifications/mark-read', [NotificationController::class, 'markRead']);
+});
 
 
 });

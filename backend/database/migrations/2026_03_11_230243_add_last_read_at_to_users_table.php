@@ -11,10 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('articles', function (Blueprint $table) {
-            $table->integer('views')->default(0);
-            $table->integer('clicks')->default(0);
-            $table->float('score')->default(0);
+        Schema::table('users', function (Blueprint $table) {
+            $table->timestamp('last_read_at')->nullable()->after('updated_at');
         });
     }
 
@@ -23,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('articles', function (Blueprint $table) {
-            //
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('last_read_at');
         });
     }
 };

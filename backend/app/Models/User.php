@@ -24,6 +24,7 @@ class User extends Authenticatable implements JWTSubject
         'name',
         'email',
         'password',
+        'last_read_at',
     ];
 
     /**
@@ -46,6 +47,7 @@ class User extends Authenticatable implements JWTSubject
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_read_at' => 'datetime',
         ];
     }
 
@@ -59,10 +61,11 @@ class User extends Authenticatable implements JWTSubject
     }
 
 
-    public function subscriptions()
-   {
-       return $this->belongsToMany(Category::class)->withTimestamps();
-    }
+  public function subscriptions()
+{
+    return $this->belongsToMany(Category::class, 'user_category')
+        ->withTimestamps();
+}
 
 
 }

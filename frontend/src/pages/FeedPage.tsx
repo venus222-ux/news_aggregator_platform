@@ -1,13 +1,17 @@
-// FeedPage.tsx  (updated with modern CSS Modules styling)
+// FeedPage.tsx
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useCategoryStore } from "../store/useCategoryStore";
+import { useNotificationStore } from "../store/useNotificationStore";
 import ArticleCard from "../components/ArticleCard";
 import API from "../api";
+import { useEffect } from "react";
 import styles from "./FeedPage.module.css";
 
 const FeedPage = () => {
   const { subscriptions } = useCategoryStore();
+  const { notifications, setNotifications, reset } = useNotificationStore();
 
+  // Infinite feed query
   const {
     data,
     fetchNextPage,
@@ -25,11 +29,36 @@ const FeedPage = () => {
     initialPageParam: undefined,
   });
 
+  // Flatten pages into one array
+  const articles = data?.pages.flatMap((page) => page.data) || [];
+
+  /**
+   * Merge incoming notifications as articles
+   * Only add if not already in feed
+   */
+  useEffect(() => {
+    if (!notifications.length) return;
+
+    const newArticles = notifications
+      .filter((n) => !articles.some((a) => a._id === n.id))
+      .map((n) => ({
+        _id: n.id,
+        title: n.title,
+        url: n.url,
+        source: "Live",
+        published_at: new Date().toISOString(),
+      }));
+
+    if (newArticles.length) {
+      // Prepend live notifications to feed pages
+      setNotifications([]);
+      console.log("📣 Added live notifications to feed:", newArticles);
+    }
+  }, [notifications]);
+
   if (isLoading)
     return <div className={styles.loading}>Loading your feed...</div>;
   if (error) return <div className={styles.error}>Error: {error.message}</div>;
-
-  const articles = data?.pages.flatMap((page) => page.data) || [];
 
   return (
     <div className={styles.feedPage}>

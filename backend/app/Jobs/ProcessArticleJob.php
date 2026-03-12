@@ -45,7 +45,7 @@ class ProcessArticleJob implements ShouldQueue
 
             $categoryId = $this->detectCategory($normalized);
 
-            Article::create([
+            $article = Article::create([
                 'title' => $normalized['title'],
                 'description' => $normalized['description'],
                 'content' => $normalized['content'],
@@ -56,6 +56,8 @@ class ProcessArticleJob implements ShouldQueue
                 'raw' => $normalized['raw'],
                 'hash' => $hash, // New field for duplicate detection
             ]);
+
+            event(new \App\Events\ArticleCreated($article));
 
             // Invalidate user caches (simple: invalidate all feed caches; optimize later)
             Cache::tags('feeds')->flush();

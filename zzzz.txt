@@ -21,21 +21,19 @@ Next:
 🟢 AI
 
 
+BUG: PUSHER NAVBAR NOTIFICATION
+
+
+
+.....
+
 RUN CMD:
 php artisan queue:work --queue=default
 php artisan queue:work --queue=processing
 
 php artisan queue:failed  //Check failed jobs
-
 php artisan schedule:work
 
-//Check logs
-storage/logs/laravel.log
-
-
-//Check Redis queue
-redis-cli
-keys *
 
 
 Inside tinker: 
@@ -47,6 +45,35 @@ App\Models\Article::count()
 //Test Cache
 Cache::tags(['test'])->get('foo');
 Cache::tags(['test'])->put('foo','bar',60);
+
+
+Test Notification in Tinker:
+use App\Models\Article;
+use App\Events\ArticleCreated;
+use Illuminate\Support\Facades\Event;
+
+// Loop and create articles, then trigger event
+collect(range(1,5))->each(function($i) {
+    $article = Article::create([
+        'title' => "Test Article #{$i}",
+        'description' => "This is a test notification {$i}",
+        'category_id' => 1,      // Make sure this category exists
+        'source' => 'Tinker',
+        'url' => "https://example.com/test-article-{$i}",
+        'published_at' => now(),
+    ]);
+
+    // 2️⃣ Trigger the event
+    event(new ArticleCreated($article));
+
+    echo "Event triggered for article: {$article->title}\n";
+});
+
+
+
+
+
+
 
 ES + SCOUT
 http://localhost:9200/articles_index/_search

@@ -10,12 +10,17 @@ interface Article {
   category_id?: string;
 }
 
+interface Cursor {
+  date: string;
+  id: string;
+}
+
 interface FeedStore {
   articles: Article[];
-  nextCursor: string | null;
+  nextCursor: Cursor | null; // store as object
   loading: boolean;
-  fetchFeed: (cursor?: string) => Promise<void>;
-  resetFeed: () => void; // ✅ add this
+  fetchFeed: (cursor?: Cursor) => Promise<void>;
+  resetFeed: () => void;
 }
 
 export const useFeedStore = create<FeedStore>((set, get) => ({
@@ -23,20 +28,30 @@ export const useFeedStore = create<FeedStore>((set, get) => ({
   nextCursor: null,
   loading: false,
 
-  fetchFeed: async (cursor) => {
+  fetchFeed: async (cursor?: Cursor) => {
+    if (get().loading) return;
+
     set({ loading: true });
+
     try {
-      const res = await API.get(`/feed${cursor ? `?cursor=${cursor}` : ""}`);
+      const res = await API.get("/feed", {
+        params: cursor
+          ? { cursor_date: cursor.date, cursor_id: cursor.id }
+          : {},
+      });
+
+      const newArticles = res.data.data || [];
+
+      const merged = cursor ? [...get().articles, ...newArticles] : newArticles;
+
       set({
-        articles: cursor
-          ? [...get().articles, ...res.data.data]
-          : res.data.data,
-        nextCursor: res.data.nextCursor,
+        articles: merged,
+        nextCursor: res.data.nextCursor || null,
       });
     } finally {
       set({ loading: false });
     }
   },
 
-  resetFeed: () => set({ articles: [], nextCursor: null }), // ✅ implementation
+  resetFeed: () => set({ articles: [], nextCursor: null }),
 }));

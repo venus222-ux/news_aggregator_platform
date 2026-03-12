@@ -3,6 +3,9 @@
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
+
+// Add this import
+use App\Jobs\CalculateArticleScoreJob;
 use App\Jobs\FetchNewsJob;
 
 Artisan::command('inspire', function () {
@@ -16,3 +19,8 @@ Schedule::call(function () {
 ->name('fetch-news-job')
 ->everyTenMinutes()
 ->withoutOverlapping();
+
+// ✅ CORRECTED: CalculateArticleScoreJob
+Schedule::job(new CalculateArticleScoreJob())
+    ->everyFiveMinutes()
+    ->withoutOverlapping();   // prevents overlapping runs

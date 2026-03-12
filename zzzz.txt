@@ -26,8 +26,7 @@ Next:
 🟢 AI
 
 ...
-BETTER ES SCOUT filters
-SCRORE?
+BETTER ES SCOUT sort by new, relevance 
 CLEAR ALL BTN
 HORIZON + SUPERVISOR
 
@@ -41,6 +40,7 @@ php artisan queue:work --queue=processing
 
 php artisan queue:failed  //Check failed jobs
 php artisan schedule:work
+php artisan cache:clear
 
 
 
@@ -79,7 +79,9 @@ collect(range(1,5))->each(function($i) {
 
 
 
-
+....
+//run every minute during development
+php artisan score:calculate
 
 
 

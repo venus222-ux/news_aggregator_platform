@@ -15,39 +15,61 @@ const CategoryList = ({ admin = false }) => {
   useEffect(() => {
     fetchAll();
     fetchSubscriptions();
-  }, []);
+  }, [fetchAll, fetchSubscriptions]);
 
   return (
-    <div className={styles.container}>
-      <h3 className={styles.title}>
-        <i className="bi bi-grid-3x3-gap-fill me-2"></i>Categories
-      </h3>
+    <div className={styles.wrapper}>
+      <header className={styles.header}>
+        <div className={styles.headerTitle}>
+          <h3 className={styles.title}>
+            <i className="bi bi-grid-3x3-gap-fill me-2"></i>Topic Categories
+          </h3>
+          <p className={styles.subtitle}>
+            Choose the topics you want to see in your personalized feed.
+          </p>
+        </div>
+      </header>
+
       <div className={styles.grid}>
-        {categories.map((c) => (
-          <div key={c.id} className={styles.categoryCard}>
-            <div className={styles.cardBody}>
-              <div className={styles.iconWrapper}>
-                <i className="bi bi-folder2-open"></i>
-              </div>
-              <h5 className={styles.cardTitle}>{c.name}</h5>
-              {!admin && (
-                <button
-                  className={`${styles.actionBtn} ${subscriptions.includes(c.id) ? styles.unsubBtn : styles.subBtn}`}
-                  onClick={() =>
-                    subscriptions.includes(c.id)
-                      ? unsubscribe(c.id)
-                      : subscribe(c.id)
-                  }
-                >
+        {categories.map((c) => {
+          const isSubscribed = subscriptions.includes(c.id);
+
+          return (
+            <div
+              key={c.id}
+              className={`${styles.categoryCard} ${isSubscribed ? styles.activeCard : ""}`}
+            >
+              <div className={styles.cardBody}>
+                <div className={styles.iconWrapper}>
                   <i
-                    className={`bi ${subscriptions.includes(c.id) ? "bi-bell-slash me-2" : "bi-bell me-2"}`}
+                    className={`bi ${isSubscribed ? "bi-check2-circle" : "bi-hash"}`}
                   ></i>
-                  {subscriptions.includes(c.id) ? "Unsubscribe" : "Subscribe"}
-                </button>
-              )}
+                </div>
+
+                <div className={styles.content}>
+                  <h5 className={styles.cardTitle}>{c.name}</h5>
+                  <span className={styles.badge}>
+                    {isSubscribed ? "Subscribed" : "Available"}
+                  </span>
+                </div>
+
+                {!admin && (
+                  <button
+                    className={`${styles.actionBtn} ${isSubscribed ? styles.unsubBtn : styles.subBtn}`}
+                    onClick={() =>
+                      isSubscribed ? unsubscribe(c.id) : subscribe(c.id)
+                    }
+                  >
+                    <i
+                      className={`bi ${isSubscribed ? "bi-bell-slash" : "bi-bell"}`}
+                    ></i>
+                    <span>{isSubscribed ? "Unsubscribe" : "Subscribe"}</span>
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -1,220 +1,106 @@
-/* Base card styles */
 .card {
-  position: relative;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  border-radius: 1.5rem;
-  box-shadow:
-    0 10px 25px -5px rgba(0, 0, 0, 0.1),
-    0 8px 10px -6px rgba(0, 0, 0, 0.02);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 20px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+}
+
+:global(.dark) .card {
+  background: #1e293b;
+  border-color: rgba(255, 255, 255, 0.06);
 }
 
 .card:hover {
-  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.2);
-  transform: translateY(-4px);
+  transform: translateY(-6px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  border-color: #6366f1;
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .card {
-    background: rgba(31, 41, 55, 0.8);
-    border-color: rgba(255, 255, 255, 0.05);
-  }
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
-/* Gradient bar that appears on hover */
-.gradientBar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #3b82f6, #9333ea);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.3s ease;
+.source {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.1);
+  padding: 4px 10px;
+  border-radius: 8px;
 }
 
-.card:hover .gradientBar {
-  transform: scaleX(1);
+.date {
+  font-size: 0.8rem;
+  color: #94a3b8;
 }
 
-/* Content padding */
-.content {
-  padding: 1.5rem;
-}
-
-/* Title */
 .title {
-  margin: 0 0 0.75rem 0;
   font-size: 1.25rem;
   font-weight: 700;
   line-height: 1.4;
-  color: #111827;
+  margin-bottom: 0.75rem;
+  color: #0f172a;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  transition: color 0.2s ease;
 }
 
-.card:hover .title {
-  color: #2563eb;
+:global(.dark) .title {
+  color: #f8fafc;
 }
 
-@media (prefers-color-scheme: dark) {
-  .title {
-    color: #f9fafb;
-  }
-  .card:hover .title {
-    color: #60a5fa;
-  }
-}
-
-/* Description */
 .description {
-  margin: 0 0 1rem 0;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  color: #64748b;
   line-height: 1.6;
-  color: #4b5563;
+  margin-bottom: 1.5rem;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-@media (prefers-color-scheme: dark) {
-  .description {
-    color: #d1d5db;
-  }
+:global(.dark) .description {
+  color: #94a3b8;
 }
 
-/* Metadata row */
-.metadata {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.25rem;
-  font-size: 0.875rem;
-  color: #6b7280;
+.footer {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-@media (prefers-color-scheme: dark) {
-  .metadata {
-    color: #9ca3af;
-  }
+:global(.dark) .footer {
+  border-top-color: rgba(255, 255, 255, 0.05);
 }
 
-/* Source with icon */
-.source {
+.link {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  font-weight: 500;
+  gap: 6px;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #6366f1;
+  transition: gap 0.2s;
+}
+
+.link:hover {
+  gap: 10px;
 }
 
 .icon {
-  width: 1rem;
-  height: 1rem;
-  fill: currentColor;
-}
-
-/* Date */
-.date {
-  font-variant-numeric: tabular-nums;
-}
-
-/* Button */
-.button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 0.625rem 1.25rem;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: white;
-  background: linear-gradient(135deg, #3b82f6, #9333ea);
-  border: none;
-  border-radius: 0.75rem;
-  cursor: pointer;
-  text-decoration: none;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
-}
-
-.button:hover {
-  background: linear-gradient(135deg, #2563eb, #7e22ce);
-  transform: scale(1.02);
-  box-shadow: 0 6px 10px -1px rgba(59, 130, 246, 0.4);
-}
-
-.button:active {
-  transform: scale(0.98);
-}
-
-.button:focus-visible {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
-}
-
-.buttonIcon {
-  width: 1.125rem;
-  height: 1.125rem;
-  margin-left: 0.5rem;
-  transition: transform 0.2s ease;
-}
-
-.button:hover .buttonIcon {
-  transform: translateX(4px);
-}
-
-/* Responsive adjustments */
-@media (min-width: 640px) {
-  .button {
-    width: auto;
-  }
-}
-
-/* Add at the bottom */
-.externalBadge {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: rgba(255, 255, 255, 0.9);
-  color: #6366f1;
-  font-size: 0.85rem;
-  padding: 6px 10px;
-  border-radius: 9999px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  opacity: 0;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.dark .externalBadge {
-  background: rgba(15, 23, 42, 0.9);
-  color: #a5b4fc;
-}
-
-.resultCard:hover .externalBadge {
-  opacity: 1;
-  transform: translateY(-2px);
-}
-
-.srOnly {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
+  width: 18px;
+  height: 18px;
 }

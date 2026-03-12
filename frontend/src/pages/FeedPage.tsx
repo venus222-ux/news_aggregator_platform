@@ -1,4 +1,3 @@
-// FeedPage.tsx
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useCategoryStore } from "../store/useCategoryStore";
 import { useNotificationStore } from "../store/useNotificationStore";
@@ -9,9 +8,8 @@ import styles from "./FeedPage.module.css";
 
 const FeedPage = () => {
   const { subscriptions } = useCategoryStore();
-  const { notifications, setNotifications, reset } = useNotificationStore();
+  const { notifications, setNotifications } = useNotificationStore();
 
-  // Infinite feed query
   const {
     data,
     fetchNextPage,
@@ -29,18 +27,14 @@ const FeedPage = () => {
     initialPageParam: undefined,
   });
 
-  // Flatten pages into one array
   const articles = data?.pages.flatMap((page) => page.data) || [];
 
-  /**
-   * Merge incoming notifications as articles
-   * Only add if not already in feed
-   */
   useEffect(() => {
     if (!notifications.length) return;
 
+    // Safety check for live notifications
     const newArticles = notifications
-      .filter((n) => !articles.some((a) => a._id === n.id))
+      .filter((n) => n && !articles.some((a) => a?._id === n.id))
       .map((n) => ({
         _id: n.id,
         title: n.title,
@@ -50,57 +44,85 @@ const FeedPage = () => {
       }));
 
     if (newArticles.length) {
-      // Prepend live notifications to feed pages
       setNotifications([]);
-      console.log("📣 Added live notifications to feed:", newArticles);
     }
-  }, [notifications]);
+  }, [notifications, articles, setNotifications]);
 
-  if (isLoading)
-    return <div className={styles.loading}>Loading your feed...</div>;
-  if (error) return <div className={styles.error}>Error: {error.message}</div>;
+  if (isLoading) {
+    return (
+      <div className={styles.centered}>
+        <div className={styles.spinner}></div>
+        <p>Curating your personal feed...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={styles.centered}>
+        <div className={styles.errorCard}>
+          <i className="bi bi-exclamation-triangle-fill mb-3"></i>
+          <p>Failed to load feed: {(error as any).message}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.feedPage}>
-      <div className={styles.headerWrapper}>
-        <h2 className={styles.header}>📰 Your News Feed</h2>
-        <p className={styles.subtitle}>
-          Stay updated with your favorite categories
-        </p>
-      </div>
-
-      {articles.length === 0 && (
-        <div className={styles.emptyState}>
-          <p>No articles in your subscribed categories yet.</p>
-          <p className={styles.emptyHint}>
-            Explore and follow categories on the home page!
+      <header className={styles.headerSection}>
+        <div className={styles.headerContent}>
+          <h2 className={styles.title}>
+            <span className={styles.emoji}>📰</span> Your Feed
+          </h2>
+          <p className={styles.subtitle}>
+            Real-time updates from your {subscriptions.length} selected
+            categories
           </p>
         </div>
-      )}
+      </header>
 
-      <div className={styles.articleGrid}>
-        {articles.map((a) => (
-          <ArticleCard key={a._id} article={a} />
-        ))}
-      </div>
-
-      <div className={styles.loadMoreContainer}>
-        {isFetchingNextPage ? (
-          <div className={styles.loadingMore}>Loading more stories...</div>
-        ) : hasNextPage ? (
-          <button
-            className={styles.loadMoreBtn}
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-          >
-            Load More Articles
-          </button>
+      <main className={styles.mainContent}>
+        {articles.length === 0 ? (
+          <div className={styles.emptyState}>
+            <div className={styles.emptyIcon}>✨</div>
+            <h3>Your feed is quiet...</h3>
+            <p>
+              Subscribe to more categories to see what's happening in the world.
+            </p>
+          </div>
         ) : (
-          articles.length > 0 && (
-            <p className={styles.endMessage}>🎉 You've reached the end</p>
-          )
+          <div className={styles.articleGrid}>
+            {articles.filter(Boolean).map((a) => (
+              <ArticleCard key={a._id || a.id || Math.random()} article={a} />
+            ))}
+          </div>
         )}
-      </div>
+
+        <footer className={styles.footer}>
+          {isFetchingNextPage ? (
+            <div className={styles.loadingMore}>
+              <div className={styles.miniSpinner}></div>
+              <span>Fetching more stories...</span>
+            </div>
+          ) : hasNextPage ? (
+            <button
+              className={styles.loadMoreBtn}
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+            >
+              Load More Articles
+            </button>
+          ) : (
+            articles.length > 0 && (
+              <p className={styles.endMessage}>
+                <i className="bi bi-check2-all me-2"></i>
+                You've caught up with everything for now.
+              </p>
+            )
+          )}
+        </footer>
+      </main>
     </div>
   );
 };

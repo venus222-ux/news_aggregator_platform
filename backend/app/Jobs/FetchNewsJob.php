@@ -22,13 +22,13 @@ class FetchNewsJob implements ShouldQueue
 
     public function handle()
     {
-        $sources = Source::all();
+        $sources = Source::all(); //extrage din baza de date toate site-urile de unde trebuie luate știri.
 
         foreach ($sources as $source) {
             $articles = $this->fetchArticlesFromSource($source);
 
             foreach ($articles as $article) {
-                ProcessArticlesBatchJob::dispatch($articles)
+                ProcessArticlesBatchJob::dispatch($articles) //Pentru fiecare sursă, apelează fetchArticlesFromSource
                  ->onQueue('processing');
             }
         }
@@ -106,3 +106,24 @@ class FetchNewsJob implements ShouldQueue
         return $articles;
     }
 }
+
+// FetchNewsJob:
+// Rulează periodic (scheduler) și ia toate sursele din sources.
+// Pentru fiecare sursă:
+// Dacă e rss, parsează XML.
+// Dacă e api, face HTTP request și normalizează articolele.
+// Apelează ProcessArticlesBatchJob pentru procesarea articolelor în batch.
+
+
+//Diferența dintre cele două joburi FetchNewsJob si ProcessArticleJob
+//este una de responsabilitate (Single Responsibility Principle).
+//În esență, primul se ocupă de „aprovizionare”, iar al doilea de „depozitare și organizare”.
+
+//Indiferent de unde vin știrile, la final toate devin un array
+//cu aceleași chei: title, description, content, url, published_at, category, source, raw.
+
+// Rezumat vizual
+// FetchNewsJob pornește.
+// Merge la Sursa A (RSS) -> scoate  10 articole -> Trimite batch la procesat.
+// Merge la Sursa B (API) -> Scoate 20 articole -> Trimite batch la procesat.
+// Se închide, lăsând ProcessArticlesBatchJob să facă munca grea de scriere în MongoDB.

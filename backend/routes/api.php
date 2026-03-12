@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\NewsController;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
@@ -8,6 +9,7 @@ use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\Admin\SourceController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FeedController;
 
 // Public routes
@@ -17,13 +19,15 @@ Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 
+Route::middleware(['auth:api', 'throttle:60,1'])->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'stats']);
+});
+
 // Protected routes with auth + throttle
 Route::middleware(['auth:api', 'throttle:60,1'])->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
 
-    Route::get('/dashboard', function () {
-        return response()->json(['message' => 'User Dashboard']);
-    });
+
 
     Route::get('/logout', [AuthController::class, 'logout']);
     Route::get('/profile', [AuthController::class, 'profile']);
@@ -69,6 +73,9 @@ Route::middleware(['auth:api', 'throttle:60,1'])->group(function () {
     Route::delete('/admin/sources/{source}', [SourceController::class, 'destroy']);
 
     Route::get('/admin/latest-articles', [ArticleController::class, 'latestAdmin']);
+
+    Route::get('/admin/analytics/article-stats', [AnalyticsController::class, 'articleStats']);
+    Route::get('admin/analytics/article-stats-by-category', [AnalyticsController::class, 'articleStatsByCategory']);
 });
 
 Route::middleware('auth:api')->group(function () {

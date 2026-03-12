@@ -127,3 +127,10 @@ private function normalizeData(array $data): array
     return null;
 }
 }
+
+
+// ProcessArticlesBatchJob:
+// Primesc un array de articole de la FetchNewsJob.
+// Creează hash pentru deduplicare.
+// Inseră în MongoDB doar articolele noi.
+// Flush cache-ul feed-urilor.

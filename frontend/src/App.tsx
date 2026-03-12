@@ -16,6 +16,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import CategoryList from "./components/CategoryList/CategoryList";
 import FeedPage from "./pages/FeedPage";
 import SearchPage from "./pages/SearchPage";
+import AdminAnalytics from "./components/AdminAnalytics/AdminAnalytics";
 
 const App = () => {
   const { theme, isAuth, startTokenRefreshLoop } = useStore();

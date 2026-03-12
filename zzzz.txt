@@ -1,3 +1,10 @@
+Admin introduce API pentru fetch articles salvate in MongoDB prin jobs
+Admin poate face CRUD pentru category
+User poate subscribe sau unsubscribe la o Categorie
+Primeste notificari in timp real daca are noutati la articole noi din aceea Categorie
+
+
+
 Day 1 - 2 completed Auth + Roles,
 Day 3 - Categories & Subscriptions,
 Day 4 - News Source Integration.
@@ -15,13 +22,14 @@ Day 14 - Real-time (Echo) – 30 min, efect wow maxim
 Next:
 🟢 Twitter/X support – completează cerința inițială
 🟢 Smart caching + analytics
-🟢 Supervisor
-
 🟢 Testing
 🟢 AI
 
-
-BUG: PUSHER NAVBAR NOTIFICATION
+...
+BETTER ES SCOUT filters
+SCRORE?
+CLEAR ALL BTN
+HORIZON + SUPERVISOR
 
 
 
@@ -78,3 +86,8 @@ collect(range(1,5))->each(function($i) {
 ES + SCOUT
 http://localhost:9200/articles_index/_search
 Tinker: App\Models\Article::search("AI")->get();
+
+
+
+
+

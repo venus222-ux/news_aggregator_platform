@@ -10,6 +10,20 @@ services:
     volumes:
       - redis_data_news:/data
 
+  horizon:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.worker
+    container_name: news_horizon
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+      - QUEUE_CONNECTION=redis
+    restart: unless-stopped
+
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.19.10
     container_name: news_elasticsearch

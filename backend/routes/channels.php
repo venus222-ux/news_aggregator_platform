@@ -6,7 +6,10 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
 
+// routes/channels.php
+
+// routes/channels.php
 Broadcast::channel('category.{categoryId}', function ($user, $categoryId) {
-    // Only allow user if they are subscribed to this category
-    return $user->subscriptions()->pluck('id')->contains((int)$categoryId);
+    // Check if the JWT middleware successfully identified the user
+    return $user !== null;
 });

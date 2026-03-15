@@ -1,0 +1,36 @@
+FROM php:8.2-fpm-alpine
+
+# Install system dependencies
+RUN apk add --no-cache \
+    supervisor \
+    libpng-dev \
+    libzip-dev \
+    zip \
+    unzip \
+    $PHPIZE_DEPS
+
+# Install PHP extensions (Added 'redis' here)
+RUN docker-php-ext-install pdo_mysql bcmath gd zip pcntl posix \
+    && pecl install redis \
+    && docker-php-ext-enable redis
+
+# Create the log file for supervisor
+RUN touch /var/log/supervisord.log && chmod 666 /var/log/supervisord.log
+
+# Copy supervisor config
+COPY horizon.conf /etc/supervisor/conf.d/horizon.conf
+# Ensure Laravel storage logs exist at runtime (volume mount can override image layers)
+RUN mkdir -p /var/www/html/storage/logs \
+    && chmod -R 777 /var/www/html/storage/logs \
+    && touch /var/www/html/storage/logs/horizon.log \
+    && chmod 666 /var/www/html/storage/logs/horizon.log
+
+# Also make sure the supervisord pid/log paths exist
+RUN mkdir -p /var/run \
+    && touch /var/log/supervisord.log \
+    && chmod 666 /var/log/supervisord.log
+    
+WORKDIR /var/www/html
+
+# Run supervisor
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/horizon.conf"]

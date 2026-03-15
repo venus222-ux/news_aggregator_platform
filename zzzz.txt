@@ -1,46 +1,65 @@
 Admin introduce API pentru fetch articles salvate in MongoDB prin jobs
-Admin poate face CRUD pentru category
-User poate subscribe sau unsubscribe la o Categorie
-Primeste notificari in timp real daca are noutati la articole noi din aceea Categorie
+Admin poate face CRUD pentru category.
+Se introduc articole automat la un interval de timp
+User poate subscribe sau unsubscribe la o Categorie. 
+In homepage si feed page vedea articole de unde sa abonat si sugentii din articole unde nu sa abonat
+Primeste notificari in timp real daca are noutati la articole noi din aceele category unde sa abonat
+Poate cauta articole.
+
+
+Redis, ES, Mysql/MongoDB, Pusher, Horizon, Git, Docker,
 
 
 
-Day 1 - 2 completed Auth + Roles,
-Day 3 - Categories & Subscriptions,
-Day 4 - News Source Integration.
-Day 5 – Article Processing & Normalization
-Day 6 - Personalized News Feed API, 
-Day 7 - Redis Caching Layer,React Feed Page + Infinite Scroll,
-Day 8 – React Feed Page + Infinite Scroll
-Day 9 - Article UI & Source Information
-Day 10 - Admin Source Management,
-Day 11 - Automatic News Fetch Scheduler,   
-Day 12 - Reddit Integration  
-Day 13 - Search + filters 
-Day 14 - Real-time (Echo) – 30 min, efect wow maxim
-
-Next:
-🟢 Twitter/X support – completează cerința inițială
-🟢 Smart caching + analytics
-🟢 Testing
-🟢 AI
-
-...
-BETTER ES SCOUT sort by new, relevance 
-CLEAR ALL BTN
-HORIZON + SUPERVISOR
+Controllers
+Api:
+ NotificationController.php - Controller API responsabil pentru gestionarea notificărilor utilizatorilor și trimiterea lor către frontend în timp real.
+Jobs:
+ CalculateArticleScore.php – Job care calculează scorul de relevanță al unui articol pentru a ajuta la ordonarea și prioritizarea feed-ului de știri.
+ FetchNewsJob.php – Job care extrage articole din surse externe precum RSS sau API-uri și le trimite spre procesare.
+ ProcessArticleJob.php – Job care normalizează datele articolului, verifică duplicatele, detectează categoria și salvează articolul în baza de date.
+ ProcessArticlesBatchJob.php – Job care procesează un batch de articole simultan pentru performanță mai bună și le inserează în baza de date.
+Observers
+ UserObserver.php = Observer care monitorizează evenimentele modelului User și execută automat acțiuni la creare, actualizare sau ștergere.
+Events 
+ ArticleCreated.php = Event declanșat când un articol nou este creat și folosit pentru broadcasting în timp real către utilizatori pe baza categoriei.
 
 
 
-.....
+| Concept                     | Ce face                     |
+| --------------------------- | --------------------------- |
+| **Semantic Vector Mapping** | transformă textul în vector |
+| **Cosine Similarity**       | compară vectorii            |
+
+
+
+
 
 RUN CMD:
-php artisan queue:work --queue=default
-php artisan queue:work --queue=processing
+npm run dev
+docker-composer up
+...
 
-php artisan queue:failed  //Check failed jobs
-php artisan schedule:work
-php artisan cache:clear
+{
+ "name":"TechCrunch RSS",
+ "type":"rss",
+ "url":"https://techcrunch.com/feed"
+}
+
+
+{
+ "name": "BBC News - World",
+ "type": "rss",
+ "url": "https://feeds.bbci.co.uk/news/world/rss.xml"
+}
+
+/*
+Check if the Horizon is running inseide docker:
+docker logs news_horizon
+docker exec -it news_horizon sh
+php artisan horizon:status
+php artisan horizon:supervisors
+*/
 
 
 
@@ -88,7 +107,6 @@ php artisan score:calculate
 ES + SCOUT
 http://localhost:9200/articles_index/_search
 Tinker: App\Models\Article::search("AI")->get();
-
 
 
 

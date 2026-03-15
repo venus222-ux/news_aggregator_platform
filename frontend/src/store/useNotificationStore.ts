@@ -36,10 +36,10 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   },
 
   // Add a new notification
-  addNotification: (notification: Notification) =>
+  addNotification: (notification) =>
     set((state) => ({
       notifications: [notification, ...state.notifications],
-      count: state.notifications.length + 1, // always match array length
+      count: state.count + 1,
     })),
 
   setNotifications: (notifications: Notification[]) =>

@@ -24,14 +24,14 @@ class FetchNewsJob implements ShouldQueue
     {
         $sources = Source::all(); //extrage din baza de date toate site-urile de unde trebuie luate știri.
 
-        foreach ($sources as $source) {
-            $articles = $this->fetchArticlesFromSource($source);
+foreach ($sources as $source) {
+    $articles = $this->fetchArticlesFromSource($source);
 
-            foreach ($articles as $article) {
-                ProcessArticlesBatchJob::dispatch($articles) //Pentru fiecare sursă, apelează fetchArticlesFromSource
-                 ->onQueue('processing');
-            }
-        }
+    if (!empty($articles)) {
+        ProcessArticlesBatchJob::dispatch($articles);
+
+    }
+}
     }
 
     private function fetchArticlesFromSource(Source $source): array

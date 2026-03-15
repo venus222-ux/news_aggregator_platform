@@ -10,8 +10,8 @@ class UserSeeder extends Seeder
 {
     public function run()
     {
-        // Reset all normal users, but keep admin
-        DB::table('users')->where('email', '!=', 'admin@example.com')->truncate();
+        // 🔥 Delete all users EXCEPT admin (safe with foreign keys)
+        User::where('email', '!=', 'admin@example.com')->delete();
 
         // Create normal users
         User::factory()->create([
@@ -32,7 +32,7 @@ class UserSeeder extends Seeder
             'password' => bcrypt('password123'),
         ]);
 
-        // More normal users via factory
+        // Extra users
         User::factory(7)->create();
     }
 }

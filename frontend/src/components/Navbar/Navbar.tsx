@@ -1,17 +1,24 @@
+// src/components/Navbar/Navbar.tsx
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useStore } from "../../store/useStore";
 import { useNotificationStore } from "../../store/useNotificationStore";
 import { useSubscriptionStore } from "../../store/useSubscriptionStore";
-import echo from "../../echo";
-import styles from "./Navbar.module.css";
 import { useState, useEffect, useRef } from "react";
 import SearchDropdown from "../SearchDropdown";
+import styles from "./Navbar.module.css";
+
+// 1. Import the Real-time Hook
+import useCategoryNotifications from "../../hooks/useCategoryNotifications";
 
 export default function Navbar() {
   const { isAuth, setIsAuth, theme, toggleTheme } = useStore();
-  const { count, addNotification, reset, fetchUnread, notifications } =
-    useNotificationStore();
-  const { subscriptions } = useSubscriptionStore();
+  const { count, reset, fetchUnread, notifications } = useNotificationStore();
+
+  // 2. Access the subscription store to load categories
+  const { subscriptions, fetchSubscriptions } = useSubscriptionStore();
+
+  // 3. Initialize the Real-time Engine
+  useCategoryNotifications();
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -23,6 +30,14 @@ export default function Navbar() {
 
   const closeMenu = () => setExpanded(false);
   const isActive = (path: string) => location.pathname === path;
+
+  // 4. Fetch necessary data when the user logs in or refreshes
+  useEffect(() => {
+    if (isAuth) {
+      fetchUnread();
+      fetchSubscriptions(); // 👈 Call this here!
+    }
+  }, [isAuth, fetchUnread, fetchSubscriptions]);
 
   const handleLogout = () => {
     setIsAuth(false);
@@ -57,32 +72,6 @@ export default function Navbar() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  useEffect(() => {
-    if (isAuth) fetchUnread();
-  }, [isAuth, fetchUnread]);
-
-  useEffect(() => {
-    if (!isAuth || subscriptions.length === 0) return;
-
-    subscriptions.forEach((categoryId: number) => {
-      echo
-        .private(`category.${categoryId}`)
-        .listen(".article.created", (article: any) => {
-          addNotification({
-            id: article.id,
-            title: article.title,
-            url: `/feed`,
-          });
-        });
-    });
-
-    return () => {
-      subscriptions.forEach((categoryId) =>
-        echo.leave(`private-category.${categoryId}`),
-      );
-    };
-  }, [subscriptions, isAuth, addNotification]);
 
   return (
     <nav className={`${styles.navbar} ${theme === "dark" ? styles.dark : ""}`}>

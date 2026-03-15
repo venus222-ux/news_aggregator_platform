@@ -154,16 +154,13 @@ return [
     | such as Memcached. You may define your connection settings here.
     |
     */
-
-    'redis' => [
-
-        'client' => env('REDIS_CLIENT', 'phpredis'),
-
-        'options' => [
-            'cluster' => env('REDIS_CLUSTER', 'redis'),
-            'prefix' => env('REDIS_PREFIX', Str::slug((string) env('APP_NAME', 'laravel')).'-database-'),
-            'persistent' => env('REDIS_PERSISTENT', false),
-        ],
+'redis' => [
+    'client' => env('REDIS_CLIENT', 'phpredis'),
+    'options' => [
+        'cluster' => env('REDIS_CLUSTER', 'redis'),
+        'prefix' => '', // <--- Set this to an empty string
+        'persistent' => env('REDIS_PERSISTENT', false),
+    ],
 
         'default' => [
             'url' => env('REDIS_URL'),

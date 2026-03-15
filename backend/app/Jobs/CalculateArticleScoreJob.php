@@ -3,24 +3,28 @@
 namespace App\Jobs;
 
 use App\Models\Article;
+use Illuminate\Bus\Queueable; // Add this
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels; // Add this
 
 class CalculateArticleScoreJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels; // Use them here
 
     public function handle()
     {
-        // Calculate for ALL articles (recency term already penalizes old ones)
-        // Chunked so we don't load millions into memory
+        // Chunked processing for MongoDB
         Article::chunk(200, function ($articles) {
             foreach ($articles as $article) {
-                $score =
-                    log10($article->views + 1) +          // popularity
-                    log10($article->clicks + 1) +         // clicks
-                    (strtotime($article->published_at) - 1134028003) / 45000; // recency boost
+                $views = $article->views ?? 0;
+                $clicks = $article->clicks ?? 0;
+                $publishedAt = $article->published_at ? strtotime($article->published_at) : time();
+
+                $score = log10($views + 1) +
+                         log10($clicks + 1) +
+                         ($publishedAt - 1134028003) / 45000;
 
                 $article->update(['score' => $score]);
             }

@@ -18,6 +18,7 @@ const Home = () => {
   const [discoverArticles, setDiscoverArticles] = useState<any[]>([]);
   const [discoverLoading, setDiscoverLoading] = useState(false);
   const [localFollowed, setLocalFollowed] = useState<number[]>([]);
+  const { resetFeed } = useFeedStore();
 
   /*
   -----------------------------
@@ -27,9 +28,10 @@ const Home = () => {
 
   useEffect(() => {
     if (isAuth) {
+      resetFeed(); // clear old articles
       fetchFeed();
     }
-  }, [isAuth, fetchFeed]);
+  }, [isAuth]);
 
   useEffect(() => {
     if (!loaderRef.current) return;

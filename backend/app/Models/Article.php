@@ -12,20 +12,30 @@ class Article extends Model
     protected $connection = 'mongodb';
     protected $collection = 'articles';
 
-    protected $fillable = [
-        'title',
-        'description',
-        'content',
-        'url',
-        'source',
-        'published_at',
-        'category_id',
-        'raw',
-        'hash',
-        'views',    // new field
-        'clicks',   // new field
-        'score',    // new field
-    ];
+protected $fillable = [
+    'title',
+    'description',
+    'content',
+    'url',
+    'source',
+    'published_at',
+    'category_id',
+    'raw',
+    'hash',
+    'views',
+    'clicks',
+    'score',
+    'needs_ai', // <--- IMPORTANT: Add this
+];
+
+protected $casts = [
+    'published_at' => 'datetime',
+    'views' => 'integer',
+    'clicks' => 'integer',
+    'score' => 'float',
+    'needs_ai' => 'boolean', // <--- Add this
+    'category_id' => 'string', // <--- Good for MongoDB compatibility
+];
 
     // Default values for new fields
     protected $attributes = [
@@ -34,12 +44,7 @@ class Article extends Model
         'score' => 0,
     ];
 
-    protected $casts = [
-        'published_at' => 'datetime',
-        'views' => 'integer',
-        'clicks' => 'integer',
-        'score' => 'float',
-    ];
+
 
     public function searchableAs()
     {
@@ -61,4 +66,7 @@ class Article extends Model
     {
         return $this->belongsTo(Category::class);
     }
+
+
+
 }

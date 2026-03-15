@@ -26,7 +26,9 @@ Route::middleware(['auth:api', 'throttle:60,1'])->group(function () {
 // Protected routes with auth + throttle
 Route::middleware(['auth:api', 'throttle:60,1'])->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
-
+    
+    Route::get('/feed', [FeedController::class, 'index']); // ✅ ADD THIS
+    Route::get('/feed/discover', [FeedController::class, 'discoverFeed']);
 
 
     Route::get('/logout', [AuthController::class, 'logout']);
@@ -34,10 +36,6 @@ Route::middleware(['auth:api', 'throttle:60,1'])->group(function () {
     Route::put('/profile', [AuthController::class, 'updateProfile']);
     Route::delete('/profile', [AuthController::class, 'destroyProfile']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
-
-    Route::get('/feed/discover', [FeedController::class, 'discoverFeed']);
-
-
 
     //Category
     Route::get('/categories', [CategoryController::class, 'index']);
@@ -49,10 +47,7 @@ Route::middleware(['auth:api', 'throttle:60,1'])->group(function () {
     Route::get('/articles', [ArticleController::class, 'index']); // user subscriptions
     Route::get('/articles/all', [ArticleController::class, 'all']); // admin or explore
 
-   Route::get('/articles/search', [ArticleController::class, 'search']);
-
-    //personalized feed API for subscribed categories.
-    Route::get('/feed', [FeedController::class, 'index']);
+    Route::get('/articles/search', [ArticleController::class, 'search']);
 
   Route::middleware(['admin'])->group(function () {
 

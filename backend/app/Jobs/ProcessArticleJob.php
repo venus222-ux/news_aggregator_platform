@@ -12,125 +12,139 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class ProcessArticleJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $articleData;
+    public $tries = 3;
+    public $timeout = 60;
+
+    protected array $articleData;
 
     public function __construct(array $articleData)
     {
         $this->articleData = $articleData;
     }
 
-    public function handle()
+    public function handle(): void
     {
         try {
+
             $normalized = $this->normalizeData($this->articleData);
 
-            // Prevent duplicates by URL or hash (fallback)
-         $hash = md5(
-           strtolower($normalized['title']) .
-           $normalized['source'] .
-           $normalized['published_at']
-           );
+            // 🚨 Skip if no URL
+            if (empty($normalized['url'])) {
+                return;
+            }
 
-           if (
-             Article::where('url', $normalized['url'])->exists() ||
-             Article::where('hash', $hash)->exists()
-           ) {
-            return;
-           }
+            $hash = md5(
+                strtolower($normalized['title']) .
+                strtolower($normalized['source']) .
+                $normalized['url']
+            );
+
+            // 🚨 Prevent duplicates
+            if (
+                Article::where('url', $normalized['url'])->exists() ||
+                Article::where('hash', $hash)->exists()
+            ) {
+                return;
+            }
 
             $categoryId = $this->detectCategory($normalized);
 
             $article = Article::create([
-                'title' => $normalized['title'],
-                'description' => $normalized['description'],
-                'content' => $normalized['content'],
-                'url' => $normalized['url'],
-                'source' => $normalized['source'],
-                'published_at' => \Carbon\Carbon::parse($normalized['published_at']),
-                'category_id' => $categoryId,
-                'raw' => $normalized['raw'],
-                'hash' => $hash, // New field for duplicate detection
+                'title'        => $normalized['title'],
+                'description'  => $normalized['description'],
+                'content'      => $normalized['content'],
+                'url'          => $normalized['url'],
+                'source'       => $normalized['source'],
+                'published_at' => Carbon::parse($normalized['published_at']),
+                'category_id'  => $categoryId,
+                'raw'          => $normalized['raw'],
+                'hash'         => $hash,
             ]);
 
+            // 🔥 Broadcast safely after DB commit
             event(new \App\Events\ArticleCreated($article));
 
-            // Invalidate user caches (simple: invalidate all feed caches; optimize later)
-            Cache::tags('feeds')->flush();
-        } catch (\Exception $e) {
-            Log::error("Article processing failed: {$e->getMessage()}");
+            // Clear feed cache
+            Cache::tags(['feeds'])->flush();
+
+        } catch (\Throwable $e) {
+            Log::error("Article processing failed: " . $e->getMessage());
             $this->fail($e);
         }
     }
-private function normalizeData(array $data): array
-{
-    $published = $data['published_at']
-        ?? $data['pubDate']
-        ?? $data['created_at']
-        ?? now();
 
-    try {
-        $published = \Carbon\Carbon::parse($published);
-    } catch (\Exception $e) {
-        $published = now();
-    }
+    private function normalizeData(array $data): array
+    {
+        $published = $data['published_at']
+            ?? $data['pubDate']
+            ?? $data['created_at']
+            ?? now();
 
-    return [
-        'title' => trim($data['title'] ?? ''),
-        'description' => trim(
-            Str::limit($data['description']
-            ?? $data['summary']
-            ?? $data['content']
-            ?? '', 255)
-        ),
-        'content' => trim(
-            $data['content']
-            ?? $data['description']
-            ?? $data['summary']
-            ?? ''
-        ),
-        'url' => $data['url'] ?? $data['link'] ?? null,
-        'source' => $data['source'] ?? 'Unknown',
-        'published_at' => $published,
-        'category' => $data['category'] ?? [],
-        'raw' => $data['raw'] ?? $data,
-    ];
-}
-   private function detectCategory(array $data): ?string
-{
-    $text = strtolower($data['title'] . ' ' . $data['description']);
-
-    $categories = Category::all();
-
-    foreach ($categories as $category) {
-
-        // keywords column from database
-        $keywords = $category->keywords ?? [];
-
-        // if stored as JSON string convert to array
-        if (is_string($keywords)) {
-            $keywords = json_decode($keywords, true);
+        try {
+            $published = Carbon::parse($published);
+        } catch (\Exception) {
+            $published = now();
         }
 
-        foreach ($keywords as $keyword) {
+        return [
+            'title' => trim($data['title'] ?? ''),
+            'description' => Str::limit(
+                trim($data['description']
+                ?? $data['summary']
+                ?? $data['content']
+                ?? ''),
+                255
+            ),
+            'content' => trim(
+                $data['content']
+                ?? $data['description']
+                ?? $data['summary']
+                ?? ''
+            ),
+            'url' => $data['url'] ?? $data['link'] ?? null,
+            'source' => $data['source'] ?? 'Unknown',
+            'published_at' => $published,
+            'raw' => $data['raw'] ?? $data,
+        ];
+    }
 
-            if (str_contains($text, strtolower($keyword))) {
-                return $category->id;
+    private function detectCategory(array $data): ?int
+    {
+        $text = strtolower($data['title'] . ' ' . $data['description']);
+
+        $categories = Cache::remember('categories_keywords', 3600, function () {
+            return Category::all();
+        });
+
+        foreach ($categories as $category) {
+
+            $keywords = $category->keywords ?? [];
+
+            if (is_string($keywords)) {
+                $keywords = json_decode($keywords, true) ?? [];
+            }
+
+            foreach ($keywords as $keyword) {
+                if (str_contains($text, strtolower($keyword))) {
+                    return $category->id;
+                }
             }
         }
+
+        return null;
     }
-
-    return null;
-}
 }
 
 
-// ProcessArticlesBatchJob:
-// Primesc un array de articole de la FetchNewsJob.
-// Creează hash pentru deduplicare.
-// Inseră în MongoDB doar articolele noi.
-// Flush cache-ul feed-urilor.
+//Diferența dintre cele două joburi FetchNewsJob si ProcessArticleJob
+//este una de responsabilitate (Single Responsibility Principle).
+//În esență, primul se ocupă de „aprovizionare”, iar al doilea de „depozitare și organizare”.
+
+//Indiferent de unde vin știrile, la final toate devin un array
+//cu aceleași chei: title, description, content, url, published_at, category, source, raw.1

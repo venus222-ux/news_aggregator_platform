@@ -1,23 +1,27 @@
+// src/echo.ts
 import Echo from "laravel-echo";
 import Pusher from "pusher-js";
 
 window.Pusher = Pusher;
+// Keep this true for now so you can see "Subscription Succeeded" in console
+window.Pusher.logToConsole = true;
 
+// src/echo.ts
 const echo = new Echo({
   broadcaster: "pusher",
   key: "45879cb0d9cad8bd459c",
   cluster: "eu",
   forceTLS: true,
-  wsHost: window.location.hostname, // optional for local dev
-  wsPort: 6001, // your websocket port
-  disableStats: true, // optional
-  authEndpoint: "http://localhost:8000/broadcasting/auth",
+  // Ensure this matches the prefix in bootstrap/app.php
+  authEndpoint: "http://localhost:8000/api/broadcasting/auth",
   auth: {
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
+      get Authorization() {
+        return `Bearer ${localStorage.getItem("token")}`;
+      },
+      Accept: "application/json",
     },
   },
 });
 
-// ✅ Use private channels for authenticated category subscriptions
 export default echo;

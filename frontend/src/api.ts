@@ -13,8 +13,11 @@ let failedQueue: {
 // Process the queue of failed requests
 const processQueue = (error: any, token: string | null = null) => {
   failedQueue.forEach((prom) => {
-    if (error) prom.reject(error);
-    else prom.resolve(API(prom as any));
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve();
+    }
   });
   failedQueue = [];
 };

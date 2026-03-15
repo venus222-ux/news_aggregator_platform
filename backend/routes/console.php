@@ -1,26 +1,18 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+use App\Jobs\CalculateArticleScoreJob;
+use App\Jobs\ClassifyArticlesAI;
+use App\Jobs\FetchNewsJob;
 use Illuminate\Support\Facades\Schedule;
 
-// Add this import
-use App\Jobs\CalculateArticleScoreJob;
-use App\Jobs\FetchNewsJob;
+// Use Class Name string instead of "new Job()"
+Schedule::job(FetchNewsJob::class)
+    ->everyMinute()
+    ->withoutOverlapping();
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+Schedule::job(CalculateArticleScoreJob::class)
+    ->everyMinute()
+    ->withoutOverlapping();
 
-// Run FetchNewsJob every 10 minutes
-Schedule::call(function () {
-    FetchNewsJob::dispatch()->onQueue('default');
-})
-->name('fetch-news-job')
-->everyTenMinutes()
-->withoutOverlapping();
-
-// ✅ CORRECTED: CalculateArticleScoreJob
-Schedule::job(new CalculateArticleScoreJob())
-    ->everyFiveMinutes()
-    ->withoutOverlapping();   // prevents overlapping runs
+Schedule::job(ClassifyArticlesAI::class)
+    ->everyFiveMinutes();

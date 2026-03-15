@@ -6,6 +6,7 @@ use App\Models\Article;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class FeedController extends Controller
 {
@@ -52,6 +53,8 @@ public function index(Request $request)
 
     $last = $articles->last();
 
+     Log::info('FEED CONTROLLER HIT');
+
     return response()->json([
         'data' => $articles,
         'nextCursor' => $last ? [
@@ -59,6 +62,7 @@ public function index(Request $request)
             'id' => (string) $last->_id,
         ] : null,
     ]);
+
 }
 public function discoverFeed()
 {

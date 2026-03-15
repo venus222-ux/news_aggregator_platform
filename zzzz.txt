@@ -53,6 +53,26 @@ docker-composer up
  "url": "https://feeds.bbci.co.uk/news/world/rss.xml"
 }
 
+\App\Models\Source::create([
+    'name' => 'The Verge',
+    'type' => 'rss',
+    'url'  => 'https://www.theverge.com/rss/index.xml'
+]);
+
+\App\Models\Source::create([
+    'name' => 'WIRED',
+    'type' => 'rss',
+    'url'  => 'https://www.wired.com/feed/rss'
+]);
+
+
+\App\Models\Source::create([
+    'name' => 'NYT World',
+    'type' => 'rss',
+    'url'  => 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml'
+]);
+
+
 /*
 Check if the Horizon is running inseide docker:
 docker logs news_horizon

@@ -25,44 +25,65 @@ public function index(Request $request)
         'cursor_id'   => 'nullable|string',
     ]);
 
-    $subscriptions = $user->subscriptions()->pluck('categories.id')->toArray();
-    if (empty($subscriptions)) {
-        return response()->json(['data' => [], 'nextCursor' => null]);
-    }
+    // 1. Get Subscription IDs and cast to Strings for MongoDB compatibility
+    $subscriptions = $user->subscriptions()
+        ->pluck('categories.id')
+        ->map(fn($id) => (string) $id)
+        ->toArray();
 
     $cursorDate = $validated['cursor_date'] ?? null;
     $cursorId   = $validated['cursor_id'] ?? null;
 
-    $query = Article::whereIn('category_id', $subscriptions)
-        ->orderBy('published_at', 'desc')
-        ->orderBy('_id', 'desc');
+    // 2. Build the Query
+    $query = Article::query();
 
+    // Only filter by category if the user actually has subscriptions
+    if (!empty($subscriptions)) {
+        $query->whereIn('category_id', $subscriptions);
+    }
+
+    // 3. Cursor Pagination Logic
     if ($cursorDate && $cursorId) {
         $query->where(function ($q) use ($cursorDate, $cursorId) {
             $q->where('published_at', '<', $cursorDate)
               ->orWhere(function ($q2) use ($cursorDate, $cursorId) {
-                  // Use MongoDB ObjectId comparison
                   $q2->where('published_at', $cursorDate)
                      ->where('_id', '<', $cursorId);
               });
         });
     }
 
-    // Fetch 20 articles per page
-    $articles = $query->limit(20)->get();
+    // 4. Sorting & Execution
+    $articles = $query->orderBy('published_at', 'desc')
+        ->orderBy('_id', 'desc')
+        ->limit(20)
+        ->get();
 
     $last = $articles->last();
 
-     Log::info('FEED CONTROLLER HIT');
+    // 5. Hydrate Category Names (similar to your discoverFeed logic)
+    // This prevents the frontend from showing empty category badges
+    if ($articles->isNotEmpty()) {
+        $categoryIds = $articles->pluck('category_id')->unique()->toArray();
+        $categories = \App\Models\Category::whereIn('id', $categoryIds)
+            ->pluck('name', 'id')
+            ->toArray();
+
+        $articles->each(function ($article) use ($categories) {
+            $cid = $article->category_id;
+            $article->category = ['name' => $categories[$cid] ?? 'News'];
+        });
+    }
+
+    Log::info("FEED CONTROLLER HIT. User: {$user->id} | Found: " . $articles->count());
 
     return response()->json([
         'data' => $articles,
         'nextCursor' => $last ? [
-            'date' => $last->published_at,
-            'id' => (string) $last->_id,
+            'date' => $last->published_at->toISOString(),
+            'id'   => (string) $last->_id,
         ] : null,
     ]);
-
 }
 public function discoverFeed()
 {

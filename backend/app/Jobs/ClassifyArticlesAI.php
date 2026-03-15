@@ -18,8 +18,8 @@ class ClassifyArticlesAI implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     // ADD THESE TWO LINES
-    public $tries = 3;
-    public $backoff = 60; // Wait 60 seconds before retrying if it fails
+    public $tries = 5;
+    public $backoff = 300; // Wait 60 seconds before retrying if it fails
 
    public function handle()
 {

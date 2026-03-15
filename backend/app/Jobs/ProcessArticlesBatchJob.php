@@ -36,30 +36,51 @@ public function handle()
 
     if (empty($this->articles)) return;
 
+    // Load categories once per batch
     $categories = Category::where('slug', '!=', 'uncategorized')->get();
     $uncategorized = Category::firstOrCreate(['slug' => 'uncategorized'], ['name' => 'Uncategorized']);
 
-// Inside ProcessArticlesBatchJob.php
-foreach ($this->articles as $article) {
-    $url = $article['url'] ?? '';
-    $title = $article['title'] ?? '';
-    // Better uniqueness: Title + URL
-    $hash = md5(strtolower(trim($title . $url)));
+    $savedCount = 0;
 
-    Article::updateOrCreate(
-        ['hash' => $hash],
-        [
-            'title'        => Str::limit($title, 255),
-            'description'  => Str::limit($article['description'] ?? '', 1000),
-            'url'          => $url,
-            'source'       => $article['source'] ?? 'Unknown',
-            'published_at' => $this->safeParseDate($article['published_at'] ?? null),
-            'category_id'  => $bestMatch ? $bestMatch->id : $uncategorized->id,
-            'needs_ai'     => $bestMatch ? false : true,
-        ]
-    );
+    foreach ($this->articles as $articleData) {
+        try {
+            $url = $articleData['url'] ?? '';
+            $title = $articleData['title'] ?? '';
+
+            if (empty($url) || empty($title)) continue;
+
+            // Use a consistent hash logic
+            $hash = md5(strtolower(trim($title . $url)));
+
+            $bestMatch = $this->findCategoryByKeywords($articleData, $categories);
+
+            // Using the Article model specifically on the mongodb connection
+            $article = Article::updateOrCreate(
+                ['hash' => $hash],
+                [
+                    'title'        => Str::limit($title, 255),
+                    'description'  => Str::limit($articleData['description'] ?? '', 1000),
+                    'url'          => $url,
+                    'source'       => $articleData['source'] ?? 'Unknown',
+                    'published_at' => $this->safeParseDate($articleData['published_at'] ?? null),
+                    'category_id'  => $bestMatch ? (string)$bestMatch->id : (string)$uncategorized->id,
+                    'needs_ai'     => $bestMatch ? false : true,
+                ]
+            );
+
+            if ($article->wasRecentlyCreated) {
+                $savedCount++;
+            }
+        } catch (\Exception $e) {
+            Log::error("Failed to save article to MongoDB: " . $e->getMessage());
+        }
+    }
+
+    Log::info("Batch complete. New articles added to MongoDB: " . $savedCount);
 }
-}
+
+
+
 private function findCategoryByKeywords($article, $categories) {
     $title = strtolower($article['title'] ?? '');
     $description = strtolower($article['description'] ?? '');

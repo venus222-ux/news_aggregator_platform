@@ -7,11 +7,10 @@ use Illuminate\Support\Facades\Schedule;
 
 // Use Class Name string instead of "new Job()"
 Schedule::job(FetchNewsJob::class)
-    ->everyMinute()
-    ->withoutOverlapping();
+    ->everyMinute();
 
 Schedule::job(CalculateArticleScoreJob::class)
-    ->everyMinute()
+    ->everyTenMinutes()
     ->withoutOverlapping();
 
 Schedule::job(ClassifyArticlesAI::class)

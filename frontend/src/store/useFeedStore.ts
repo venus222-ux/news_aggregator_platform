@@ -2,7 +2,6 @@ import { create } from "zustand";
 import API from "../api";
 
 interface Article {
-  _id: string;
   title: string;
   description?: string;
   source: string;
@@ -30,7 +29,6 @@ export const useFeedStore = create<FeedStore>((set, get) => ({
 
   fetchFeed: async (cursor?: Cursor) => {
     if (get().loading) return;
-
     set({ loading: true });
 
     try {
@@ -41,11 +39,25 @@ export const useFeedStore = create<FeedStore>((set, get) => ({
       });
 
       const newArticles = res.data.data || [];
+      const currentArticles = get().articles;
 
-      const merged = cursor ? [...get().articles, ...newArticles] : newArticles;
+      // Deduplicate by merging and checking IDs/URLs
+      const merged = cursor
+        ? [...currentArticles, ...newArticles]
+        : newArticles;
+
+      const uniqueMerged = merged.filter(
+        (article, index, self) =>
+          index ===
+          self.findIndex(
+            (a) =>
+              (a._id && a._id === article._id) ||
+              (a.url && a.url === article.url),
+          ),
+      );
 
       set({
-        articles: merged,
+        articles: uniqueMerged,
         nextCursor: res.data.nextCursor || null,
       });
     } finally {

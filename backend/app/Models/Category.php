@@ -19,4 +19,10 @@ class Category extends Model
     protected $casts = [
        'keywords' => 'array',
     ];
+
+
+    public function users()
+{
+    return $this->belongsToMany(User::class, 'user_category');
+}
 }

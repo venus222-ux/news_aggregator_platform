@@ -3,49 +3,69 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Article;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use App\Models\Article;
+use Illuminate\Support\Facades\Schema;
 
 class NotificationController extends Controller
 {
-   public function unreadCount()
+public function unreadCount()
 {
     try {
         $user = Auth::user();
-        if (!$user) throw new \Exception("No authenticated user.");
 
-        // explicitly reference categories.id
-        $categoryIds = $user->subscriptions()->pluck('categories.id')->toArray();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
+        // 🔥 FIX: convert to string for MongoDB
+        $categoryIds = $user->subscriptions()
+            ->pluck('categories.id')
+            ->map(fn ($id) => (string) $id)
+            ->toArray();
+
+        if (empty($categoryIds)) {
+            return response()->json([
+                'count' => 0,
+                'notifications' => []
+            ]);
+        }
 
         $lastRead = $user->last_read_at ?? now()->subYear();
 
-        $articles = Article::whereIn('category_id', $categoryIds)
-            ->where('published_at', '>', $lastRead)
-            ->orderBy('published_at', 'desc')
-            ->get(['id', 'title', 'category_id', 'published_at']);
+        $query = Article::whereIn('category_id', $categoryIds);
 
-        $notifications = $articles->map(function($a) {
-            return [
-                'id' => (string) $a->id,
+        if (!empty($lastRead)) {
+            $query->where('published_at', '>', $lastRead);
+        }
+
+        $articles = $query
+            ->orderBy('published_at', 'desc')
+            ->limit(20)
+            ->get(['_id', 'title']); // Mongo uses _id
+
+        return response()->json([
+            'count' => $articles->count(),
+            'notifications' => $articles->map(fn ($a) => [
+                'id' => (string) $a->_id, // 🔥 Mongo fix
                 'title' => $a->title,
                 'url' => '/feed',
                 'read' => false,
-            ];
-        });
-
-        return response()->json([
-            'count' => $notifications->count(),
-            'notifications' => $notifications,
+            ])
         ]);
 
-    } catch (\Exception $e) {
-        Log::error('Unread notifications failed: '.$e->getMessage());
-        return response()->json(['error' => $e->getMessage()], 500);
+    } catch (\Throwable $e) {
+
+        \Log::error('Notification ERROR', [
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+
+        return response()->json([
+            'message' => $e->getMessage()
+        ], 500);
     }
 }
-
     public function markRead()
     {
         $user = Auth::user();

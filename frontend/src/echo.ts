@@ -2,23 +2,25 @@
 import Echo from "laravel-echo";
 import Pusher from "pusher-js";
 
-window.Pusher = Pusher;
-// Keep this true for now so you can see "Subscription Succeeded" in console
-window.Pusher.logToConsole = true;
+(window as any).Pusher = Pusher;
 
-// src/echo.ts
+const pusherKey = import.meta.env.VITE_PUSHER_APP_KEY || "45879cb0d9cad8bd459c";
+const pusherCluster = import.meta.env.VITE_PUSHER_APP_CLUSTER || "eu";
+
+if (!pusherKey) {
+  console.error("❌ Pusher Key is missing! Check your .env file.");
+}
+
 const echo = new Echo({
   broadcaster: "pusher",
-  key: "45879cb0d9cad8bd459c",
-  cluster: "eu",
+  key: pusherKey,
+  cluster: pusherCluster,
   forceTLS: true,
-  // Ensure this matches the prefix in bootstrap/app.php
   authEndpoint: "http://localhost:8000/api/broadcasting/auth",
   auth: {
     headers: {
-      get Authorization() {
-        return `Bearer ${localStorage.getItem("token")}`;
-      },
+      // Use a getter to ensure we always have the latest token from storage
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
       Accept: "application/json",
     },
   },

@@ -11,6 +11,9 @@ use App\Http\Controllers\Admin\SourceController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FeedController;
+use Illuminate\Support\Facades\Broadcast;
+
+Broadcast::routes(['middleware' => ['auth:api']]);
 
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
@@ -19,23 +22,24 @@ Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 
-Route::middleware(['auth:api', 'throttle:60,1'])->group(function () {
-    Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'stats']);
-});
 
 // Protected routes with auth + throttle
 Route::middleware(['auth:api', 'throttle:60,1'])->group(function () {
-    Route::get('/me', [AuthController::class, 'me']);
-    
-    Route::get('/feed', [FeedController::class, 'index']); // ✅ ADD THIS
-    Route::get('/feed/discover', [FeedController::class, 'discoverFeed']);
 
-
+    //Profile
     Route::get('/logout', [AuthController::class, 'logout']);
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::put('/profile', [AuthController::class, 'updateProfile']);
     Route::delete('/profile', [AuthController::class, 'destroyProfile']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
+
+
+    Route::get('/me', [AuthController::class, 'me']);
+
+    //Feed
+    Route::get('/feed', [FeedController::class, 'index']); //
+    Route::get('/feed/discover', [FeedController::class, 'discoverFeed']);
+
 
     //Category
     Route::get('/categories', [CategoryController::class, 'index']);
@@ -48,6 +52,11 @@ Route::middleware(['auth:api', 'throttle:60,1'])->group(function () {
     Route::get('/articles/all', [ArticleController::class, 'all']); // admin or explore
 
     Route::get('/articles/search', [ArticleController::class, 'search']);
+
+    //Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'stats']);
+    Route::get('/notifications/unread', [NotificationController::class, 'unreadCount']); 
+    Route::post('/notifications/mark-read', [NotificationController::class, 'markRead']);
 
   Route::middleware(['admin'])->group(function () {
 
@@ -73,10 +82,6 @@ Route::middleware(['auth:api', 'throttle:60,1'])->group(function () {
     Route::get('admin/analytics/article-stats-by-category', [AnalyticsController::class, 'articleStatsByCategory']);
 });
 
-Route::middleware('auth:api')->group(function () {
-    Route::get('/notifications/unread', [NotificationController::class, 'unreadCount']);
-    Route::post('/notifications/mark-read', [NotificationController::class, 'markRead']);
-});
 
 
 });

@@ -47,12 +47,17 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
   fetchUnread: async () => {
     try {
+      const token = localStorage.getItem("token");
+      if (!token) return; // 👈 prevent unnecessary call
+
       const { data } = await API.get("/notifications/unread");
+
       set({
         count: data.count,
         notifications: data.notifications || [],
       });
-    } catch (e) {
+    } catch (e: any) {
+      if (e.name === "CanceledError") return;
       console.error("Failed to fetch unread notifications", e);
     }
   },

@@ -57,7 +57,9 @@ class FetchNewsJob implements ShouldQueue
 
                 $rss = new \SimpleXMLElement($response->body());
 
-                foreach ($rss->channel->item as $item) {
+                $items = $rss->channel->item ?? [];
+
+                 foreach ($items as $item) {
                     $articles[] = [
                         'title' => (string) $item->title,
                         'description' => (string) $item->description,
@@ -78,7 +80,8 @@ class FetchNewsJob implements ShouldQueue
 
                     // NewsAPI logic
                     if (isset($json['articles'])) {
-                        foreach ($json['articles'] as $item) {
+                       $articlesApi = $json['articles'] ?? [];
+                       foreach ($articlesApi as $item) {
                             $articles[] = [
                                 'title' => $item['title'] ?? null,
                                 'description' => $item['description'] ?? null,

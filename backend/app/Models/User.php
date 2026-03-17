@@ -68,4 +68,11 @@ class User extends Authenticatable implements JWTSubject
 }
 
 
+ 
+public function categories()
+{
+    return $this->belongsToMany(Category::class, 'user_category');
+}
+
+
 }

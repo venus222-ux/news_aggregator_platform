@@ -31,46 +31,49 @@ class ProcessArticleJob implements ShouldQueue
     public function handle(): void
     {
         try {
-
             $normalized = $this->normalizeData($this->articleData);
 
-            // 🚨 Skip if no URL
             if (empty($normalized['url'])) {
                 return;
             }
 
-            $hash = md5(
-                strtolower($normalized['title']) .
-                strtolower($normalized['source']) .
-                $normalized['url']
-            );
+            // Create unique hash for deduplication
+            $hash = md5(strtolower($normalized['title']) . strtolower($normalized['source']) . $normalized['url']);
 
-            // 🚨 Prevent duplicates
-            if (
-                Article::where('url', $normalized['url'])->exists() ||
-                Article::where('hash', $hash)->exists()
-            ) {
+            // Prevents duplicates in MongoDB
+            if (Article::where('url', $normalized['url'])->exists() || Article::where('hash', $hash)->exists()) {
                 return;
             }
 
             $categoryId = $this->detectCategory($normalized);
 
+            // 1. Create the Article in MongoDB
             $article = Article::create([
                 'title'        => $normalized['title'],
                 'description'  => $normalized['description'],
-                'content'      => $normalized['content'],
-                'url'          => $normalized['url'],
-                'source'       => $normalized['source'],
-                'published_at' => Carbon::parse($normalized['published_at']),
-                'category_id'  => $categoryId,
-                'raw'          => $normalized['raw'],
-                'hash'         => $hash,
+                'content'       => $normalized['content'],
+                'url'           => $normalized['url'],
+                'source'        => $normalized['source'],
+                'published_at'  => Carbon::parse($normalized['published_at']),
+                'category_id'   => $categoryId ? (int) $categoryId : null,
+                'raw'           => $normalized['raw'],
+                'hash'          => $hash,
             ]);
 
-            // 🔥 Broadcast safely after DB commit
-            event(new \App\Events\ArticleCreated($article));
+            // 2. Prepare Payload (Force MongoDB ID to string and Category to int)
+            $payload = [
+                'id' => (string) $article->id,
+                'title' => (string) $article->title,
+                'category_id' => $article->category_id ? (int) $article->category_id : 'general',
+            ];
 
-            // Clear feed cache
+            // 3. Fire Broadcast Event
+            // Use broadcast() helper to ensure it respects the 'pusher' driver
+            broadcast(new ArticleCreated($payload));
+
+            Log::info("SUCCESS: Article stored and broadcast sent for: " . $payload['title']);
+
+            // 4. Clear Cache
             Cache::tags(['feeds'])->flush();
 
         } catch (\Throwable $e) {
@@ -78,6 +81,9 @@ class ProcessArticleJob implements ShouldQueue
             $this->fail($e);
         }
     }
+
+
+
 
     private function normalizeData(array $data): array
     {

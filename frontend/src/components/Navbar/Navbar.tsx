@@ -33,11 +33,11 @@ export default function Navbar() {
 
   // 4. Fetch necessary data when the user logs in or refreshes
   useEffect(() => {
-    if (isAuth) {
-      fetchUnread();
-      fetchSubscriptions(); // 👈 Call this here!
-    }
-  }, [isAuth, fetchUnread, fetchSubscriptions]);
+    if (!isAuth) return;
+
+    fetchUnread();
+    fetchSubscriptions();
+  }, [isAuth]);
 
   const handleLogout = () => {
     setIsAuth(false);

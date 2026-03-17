@@ -3,7 +3,7 @@ import { useCategoryStore } from "../store/useCategoryStore";
 import { useNotificationStore } from "../store/useNotificationStore";
 import ArticleCard from "../components/ArticleCard";
 import API from "../api";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import styles from "./FeedPage.module.css";
 
 interface Cursor {
@@ -28,37 +28,40 @@ const FeedPage = () => {
     queryFn: ({ pageParam }) =>
       API.get("/feed", {
         params: pageParam
-          ? {
-              cursor_date: pageParam.date,
-              cursor_id: pageParam.id,
-            }
+          ? { cursor_date: pageParam.date, cursor_id: pageParam.id }
           : {},
       }).then((res) => res.data),
-
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-
     initialPageParam: undefined,
-
     refetchOnWindowFocus: true,
   });
 
   const articles = data?.pages.flatMap((page) => page.data) || [];
 
-  // 🔔 Real-time notification handling
+  // 1. Move useMemo UP (before early returns)
+  const uniqueList = useMemo(() => {
+    const seen = new Set();
+    return articles.filter((a) => {
+      const id = a?._id ?? a?.url;
+      if (!id || seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+  }, [articles]);
+
+  // 2. Move useEffect UP (before early returns)
   useEffect(() => {
     if (!notifications.length) return;
-
     const hasNew = notifications.some(
       (n) => !articles.some((a) => a._id === n.id),
     );
-
     if (hasNew) {
       queryClient.invalidateQueries({ queryKey: ["feed"] });
       setNotifications([]);
     }
   }, [notifications, articles, queryClient, setNotifications]);
 
-  // Loading state
+  // 3. NOW you can handle early returns
   if (isLoading) {
     return (
       <div className={styles.centered}>
@@ -68,7 +71,6 @@ const FeedPage = () => {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className={styles.centered}>
@@ -79,6 +81,7 @@ const FeedPage = () => {
     );
   }
 
+  // Final JSX
   return (
     <div className={styles.feedPage}>
       <header className={styles.headerSection}>
@@ -89,15 +92,18 @@ const FeedPage = () => {
       </header>
 
       <main className={styles.mainContent}>
-        {articles.length === 0 ? (
+        {uniqueList.length === 0 ? (
           <div className={styles.emptyState}>
             <h3>No articles yet</h3>
             <p>Subscribe to categories to start seeing news.</p>
           </div>
         ) : (
           <div className={styles.articleGrid}>
-            {articles.map((article) => (
-              <ArticleCard key={article._id} article={article} />
+            {uniqueList.map((article) => (
+              <ArticleCard
+                key={`feed-page-${article._id ?? article.url}`}
+                article={article}
+              />
             ))}
           </div>
         )}
@@ -120,5 +126,4 @@ const FeedPage = () => {
     </div>
   );
 };
-
 export default FeedPage;

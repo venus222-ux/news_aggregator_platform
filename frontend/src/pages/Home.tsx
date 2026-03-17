@@ -123,6 +123,17 @@ const Home = () => {
     }
   };
 
+  const uniqueArticles = useMemo(() => {
+    const seen = new Set();
+    return articles.filter((a) => {
+      if (!a) return false;
+      const identifier = a._id ?? a.url;
+      if (seen.has(identifier)) return false;
+      seen.add(identifier);
+      return true;
+    });
+  }, [articles]);
+
   return (
     <div className={styles.homePage}>
       {/* HERO */}
@@ -162,8 +173,8 @@ const Home = () => {
             </div>
 
             <div className={styles.grid}>
-              {articles?.filter(Boolean).map((a) => (
-                <ArticleCard key={a._id} article={a} />
+              {uniqueArticles.map((a) => (
+                <ArticleCard key={`feed-${a._id ?? a.url}`} article={a} />
               ))}
             </div>
 
@@ -202,7 +213,10 @@ const Home = () => {
                     a.category?.name || a.category || "Topic";
 
                   return (
-                    <div key={a._id} className={styles.discoverCard}>
+                    <div
+                      key={`discover-${a._id ?? a.url}`}
+                      className={styles.discoverCard}
+                    >
                       <ArticleCard article={a} />
 
                       <button

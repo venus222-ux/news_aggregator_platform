@@ -2,35 +2,37 @@
 
 namespace App\Events;
 
-use App\Models\Article;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+// Use ShouldBroadcastNow instead of ShouldBroadcast
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 
-class ArticleCreated implements ShouldBroadcastNow
+class ArticleCreated implements ShouldBroadcastNow // <--- CHANGE THIS
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public bool $afterCommit = true; // 🔥 Important
+    public array $article;
 
-    public Article $article;
-
-    public function __construct(Article $article)
+    public function __construct(array $article)
     {
         $this->article = $article;
     }
 
     public function broadcastOn(): PrivateChannel
-{
-    return new PrivateChannel(
-        'category.' . ($this->article->category_id ?? 'general')
-    );
-}
+    {
+        return new PrivateChannel(
+            'category.' . ($this->article['category_id'] ?? 'general')
+        );
+    }
 
-
+    public function broadcastWith(): array
+    {
+        return [
+            'article' => $this->article
+        ];
+    }
 
     public function broadcastAs(): string
     {

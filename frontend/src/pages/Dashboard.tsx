@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Link } from "react-router-dom"; // Add Link for navigation
 import { useDashboardStore } from "../store/useDashboardStore";
 import styles from "./Dashboard.module.css";
 
@@ -45,18 +46,23 @@ const Dashboard = () => {
         </div>
       </section>
 
-      <section>
-        <div className="d-flex align-items-center mb-3">
-          <i className="bi bi-journal-text me-2 fs-4 text-primary"></i>
-          <h3 className={`${styles.sectionTitle} mb-0`}>Recent Articles</h3>
+      <section className={styles.recentSection}>
+        <div className="d-flex align-items-center justify-content-between mb-4">
+          <div className="d-flex align-items-center">
+            <i className="bi bi-journal-text me-2 fs-4 text-primary"></i>
+            <h3 className={`${styles.sectionTitle} mb-0`}>Recent Articles</h3>
+          </div>
+          <Link to="/feed" className={styles.viewAllBtn}>
+            View Full Feed <i className="bi bi-arrow-right ms-1"></i>
+          </Link>
         </div>
 
-        <ul className={styles.articleList}>
+        <div className={styles.articleList}>
           {recentArticles.length > 0 ? (
             recentArticles.map((a) => (
-              <li key={a.id} className={styles.articleItem}>
-                <div className="d-flex align-items-center">
-                  <i className="bi bi-file-earmark-post me-3 text-muted"></i>
+              <div key={`dash-${a.id ?? a.url}`} className={styles.articleItem}>
+                <div className={styles.articleInfo}>
+                  <span className={styles.sourceTag}>{a.source || "News"}</span>
                   <a
                     href={a.url}
                     className={styles.articleLink}
@@ -65,16 +71,26 @@ const Dashboard = () => {
                   >
                     {a.title}
                   </a>
+                  <div className={styles.metaInfo}>
+                    <span className={styles.dateText}>
+                      {a.published_at
+                        ? new Date(a.published_at).toLocaleDateString()
+                        : "Recent"}
+                    </span>
+                    <span className={styles.categoryBadge}>{a.category}</span>
+                  </div>
                 </div>
-                <span className={styles.categoryBadge}>{a.category}</span>
-              </li>
+                <div className={styles.itemAction}>
+                  <i className="bi bi-box-arrow-up-right"></i>
+                </div>
+              </div>
             ))
           ) : (
-            <li className="text-center p-5 text-muted">
-              No recent articles found.
-            </li>
+            <div className={styles.emptyState}>
+              <p>No recent articles found. Try following more categories!</p>
+            </div>
           )}
-        </ul>
+        </div>
       </section>
     </div>
   );

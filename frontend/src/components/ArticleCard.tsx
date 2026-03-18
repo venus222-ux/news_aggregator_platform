@@ -43,7 +43,9 @@ const ArticleCard = ({ article }: Props) => {
           {article.title || "No Title Available"}
         </h3>
         {article.description && (
-          <p className={styles.description}>{article.description}</p>
+          <p className={styles.description}>
+            {article.description?.slice(0, 120)}
+          </p>
         )}
       </div>
 
@@ -70,4 +72,4 @@ const ArticleCard = ({ article }: Props) => {
   );
 };
 
-export default ArticleCard;
+export default React.memo(ArticleCard);

@@ -1,139 +1,172 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+// Home.tsx
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useStore } from "../store/useStore";
-import { useFeedStore } from "../store/useFeedStore";
 import { useCategoryStore } from "../store/useCategoryStore";
+import { useNotificationStore } from "../store/useNotificationStore";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import ArticleCard from "../components/ArticleCard";
+import VirtualizedArticleList from "../components/VirtualizedArticleList";
 import API from "../api";
 import styles from "./Home.module.css";
 
+interface Article {
+  _id?: string;
+  url: string;
+  title: string;
+  description?: string;
+  source: string;
+  published_at: string;
+  category_id?: number | string;
+  category?: { name: string } | string;
+}
+
 const Home = () => {
   const { isAuth } = useStore();
-  const { articles, fetchFeed, nextCursor, loading } = useFeedStore();
   const { subscriptions, subscribe } = useCategoryStore();
+  const { notifications, setNotifications } = useNotificationStore();
+  const queryClient = useQueryClient();
 
-  const loaderRef = useRef<HTMLDivElement>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
+  // ── Stabilize subscriptions for query key ──
+  const sortedSubscriptions = useMemo(
+    () => [...subscriptions].sort((a, b) => a - b),
+    [subscriptions],
+  );
 
-  const [discoverArticles, setDiscoverArticles] = useState<any[]>([]);
+  /* ----------------------
+     Personalized Feed
+  ---------------------- */
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    error,
+  } = useInfiniteQuery({
+    queryKey: ["feed", sortedSubscriptions],
+    queryFn: ({ pageParam }) =>
+      API.get("/feed", {
+        params: pageParam
+          ? { cursor_date: pageParam.date, cursor_id: pageParam.id }
+          : {},
+      }).then((res) => res.data),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    enabled: isAuth,
+    refetchOnWindowFocus: false, // ← prevent aggressive refetch on focus
+    staleTime: 3 * 60 * 1000, // 3 minutes – adjust as needed
+    initialPageParam: undefined,
+  });
+
+  const articles = useMemo(
+    () => data?.pages.flatMap((p) => p.data) || [],
+    [data],
+  );
+
+  const uniqueArticles = useMemo(() => {
+    const seen = new Set<string>();
+    return articles.filter((a: Article) => {
+      const id = a._id ?? a.url;
+      if (!id || seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+  }, [articles]);
+
+  const hasNewNotifications = useMemo(
+    () =>
+      notifications.some((n) => !uniqueArticles.some((a) => a._id === n.id)),
+    [notifications, uniqueArticles],
+  );
+
+  // ── Handle new notifications without creating render loop ──
+  useEffect(() => {
+    if (!hasNewNotifications) return;
+
+    // Invalidate only active queries + prevent loop by clearing notifications first
+    setNotifications([]);
+    queryClient.invalidateQueries({
+      queryKey: ["feed"],
+      exact: false,
+      refetchType: "active",
+    });
+  }, [hasNewNotifications, queryClient, setNotifications]);
+
+  /* ----------------------
+     Discover Feed
+  ---------------------- */
+  const [discoverArticles, setDiscoverArticles] = useState<Article[]>([]);
   const [discoverLoading, setDiscoverLoading] = useState(false);
   const [localFollowed, setLocalFollowed] = useState<number[]>([]);
-  const { resetFeed } = useFeedStore();
-
-  /*
-  -----------------------------
-  Personalized Feed
-  -----------------------------
-  */
-
-  useEffect(() => {
-    if (isAuth) {
-      resetFeed(); // clear old articles
-      fetchFeed();
-    }
-  }, [isAuth]);
-
-  useEffect(() => {
-    if (!loaderRef.current) return;
-
-    if (observerRef.current) observerRef.current.disconnect();
-
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-
-        if (entry.isIntersecting && nextCursor && !loading) {
-          fetchFeed(nextCursor); // pass cursor object now
-        }
-      },
-      { threshold: 0.5 },
-    );
-
-    observerRef.current.observe(loaderRef.current);
-
-    return () => {
-      observerRef.current?.disconnect();
-    };
-  }, [nextCursor, loading, fetchFeed]);
-
-  /*
-  -----------------------------
-  Discover Feed
-  -----------------------------
-  */
 
   const fetchDiscover = useCallback(async () => {
     setDiscoverLoading(true);
-
     try {
       const res = await API.get("/feed/discover");
       setDiscoverArticles(res.data.data || []);
     } catch (err) {
-      console.error("Discover Error:", err);
+      console.error("Discover fetch failed:", err);
     } finally {
       setDiscoverLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchDiscover();
-  }, [fetchDiscover]);
+    if (isAuth) fetchDiscover();
+  }, [isAuth, fetchDiscover]);
 
-  /*
-  Remove duplicate categories
-  */
-
-  const uniqueDiscover = useMemo(() => {
-    const map = new Map();
-
-    discoverArticles.forEach((a) => {
-      if (!map.has(a.category_id)) {
-        map.set(a.category_id, a);
+  const handleFollow = useCallback(
+    async (categoryId: number) => {
+      if (
+        subscriptions.includes(categoryId) ||
+        localFollowed.includes(categoryId)
+      ) {
+        return;
       }
-    });
 
+      try {
+        setLocalFollowed((prev) => [...prev, categoryId]);
+        await subscribe(categoryId);
+
+        // Remove followed category from discover
+        setDiscoverArticles((prev) =>
+          prev.filter((a) => Number(a.category_id) !== categoryId),
+        );
+      } catch (err) {
+        console.error("Follow failed:", err);
+        setLocalFollowed((prev) => prev.filter((id) => id !== categoryId));
+      }
+    },
+    [subscriptions, localFollowed, subscribe],
+  );
+
+  // ── Deduplicate discover by category + stabilize shape ──
+  const uniqueDiscover = useMemo(() => {
+    const map = new Map<number, Article>();
+    discoverArticles.forEach((a) => {
+      const catId = Number(a.category_id);
+      if (!map.has(catId)) map.set(catId, a);
+    });
     return Array.from(map.values());
   }, [discoverArticles]);
 
-  /*
-  -----------------------------
-  Follow category
-  -----------------------------
-  */
+  const discoverList = useMemo(
+    () =>
+      uniqueDiscover.map((a) => ({
+        ...a,
+        title:
+          a.category?.name ||
+          (typeof a.category === "string" ? a.category : "Topic"),
+        source: "Category",
+        published_at: a.published_at || new Date().toISOString(),
+        url: `category-${a.category_id}`,
+      })),
+    [uniqueDiscover],
+  );
 
-  const handleFollow = async (categoryId: number) => {
-    if (
-      subscriptions.includes(categoryId) ||
-      localFollowed.includes(categoryId)
-    )
-      return;
-
-    try {
-      setLocalFollowed((prev) => [...prev, categoryId]);
-
-      await subscribe(categoryId);
-
-      setDiscoverArticles((prev) =>
-        prev.filter((a) => Number(a.category_id) !== categoryId),
-      );
-    } catch (err) {
-      console.error(err);
-
-      setLocalFollowed((prev) => prev.filter((id) => id !== categoryId));
-    }
-  };
-
-  const uniqueArticles = useMemo(() => {
-    const seen = new Set();
-    return articles.filter((a) => {
-      if (!a) return false;
-      const identifier = a._id ?? a.url;
-      if (seen.has(identifier)) return false;
-      seen.add(identifier);
-      return true;
-    });
-  }, [articles]);
-
+  /* ----------------------
+     Render
+  ---------------------- */
   return (
     <div className={styles.homePage}>
       {/* HERO */}
@@ -142,18 +175,15 @@ const Home = () => {
           <h1 className={styles.heroTitle}>
             Stay Ahead of <span className={styles.accent}>Everything.</span>
           </h1>
-
           <p className={styles.heroSubtitle}>
             Your personalized intelligence feed. Curated by you, powered by
             NewsHub.
           </p>
-
           {!isAuth && (
             <div className={styles.heroActions}>
               <Link to="/login" className={styles.btnPrimary}>
                 Start Reading
               </Link>
-
               <Link to="/register" className={styles.btnSecondary}>
                 Join NewsHub
               </Link>
@@ -165,80 +195,84 @@ const Home = () => {
       {isAuth && (
         <main className={styles.mainContent}>
           {/* Personalized Feed */}
-
           <section className={styles.section}>
             <div className={styles.sectionHeader}>
               <h2 className={styles.sectionTitle}>For You</h2>
-              <div className={styles.titleUnderline}></div>
+              <div className={styles.titleUnderline} />
             </div>
 
-            <div className={styles.grid}>
-              {uniqueArticles.map((a) => (
-                <ArticleCard key={`feed-${a._id ?? a.url}`} article={a} />
-              ))}
-            </div>
+            {isLoading ? (
+              <div className={styles.centered}>
+                <div className={styles.spinner} />
+                <p>Loading your personalized feed...</p>
+              </div>
+            ) : error ? (
+              <div className={styles.centered}>
+                <div className={styles.errorCard}>
+                  <p>Failed to load feed. Please try again later.</p>
+                </div>
+              </div>
+            ) : uniqueArticles.length === 0 ? (
+              <div className={styles.emptyState}>
+                <h3>Your feed is empty</h3>
+                <p>Follow more topics to see articles here.</p>
+              </div>
+            ) : (
+              <VirtualizedArticleList
+                articles={uniqueArticles}
+                fetchNextPage={hasNextPage ? fetchNextPage : undefined}
+              />
+            )}
 
-            <div ref={loaderRef} className={styles.loader}>
-              {loading ? (
-                <div className={styles.spinner}></div>
-              ) : nextCursor ? (
-                <span className={styles.scrollTip}>Loading more...</span>
-              ) : (
-                "✨ You're all caught up"
-              )}
-            </div>
+            {isFetchingNextPage && (
+              <p className={styles.loadingMore}>Loading more articles...</p>
+            )}
           </section>
 
-          {/* Discover */}
-
+          {/* Discover Topics */}
           <section className={styles.section}>
             <div className={styles.sectionHeader}>
               <h2 className={styles.sectionTitle}>Discover Topics</h2>
-              <div className={styles.titleUnderline}></div>
+              <div className={styles.titleUnderline} />
             </div>
 
             {discoverLoading ? (
               <div className={styles.loading}>
                 Searching for fresh stories...
               </div>
-            ) : (
-              <div className={styles.grid}>
-                {uniqueDiscover.map((a) => {
-                  const cid = Number(a.category_id);
-
-                  const isFollowed =
-                    subscriptions.includes(cid) || localFollowed.includes(cid);
-
-                  const categoryName =
-                    a.category?.name || a.category || "Topic";
-
-                  return (
-                    <div
-                      key={`discover-${a._id ?? a.url}`}
-                      className={styles.discoverCard}
-                    >
-                      <ArticleCard article={a} />
-
-                      <button
-                        className={`${styles.followBtn} ${
-                          isFollowed ? styles.followed : ""
-                        }`}
-                        onClick={() => handleFollow(cid)}
-                        disabled={isFollowed}
-                      >
-                        {isFollowed ? (
-                          <span>
-                            <i className="bi bi-check2-circle me-2"></i>
-                            Following
-                          </span>
-                        ) : (
-                          `Explore ${categoryName}`
-                        )}
-                      </button>
-                    </div>
-                  );
-                })}
+            ) : discoverList.length === 0 ? (
+              <div className={styles.emptyState}>
+                <h3>No discoverable topics right now</h3>
+                <p>Check back later for new topics to explore.</p>
               </div>
+            ) : (
+              <VirtualizedArticleList
+                articles={discoverList}
+                fetchNextPage={undefined}
+                renderItem={(article) => (
+                  <div className={styles.discoverCard}>
+                    <ArticleCard article={article} />
+                    <button
+                      className={`${styles.followBtn} ${
+                        subscriptions.includes(Number(article.category_id)) ||
+                        localFollowed.includes(Number(article.category_id))
+                          ? styles.followed
+                          : ""
+                      }`}
+                      onClick={() => handleFollow(Number(article.category_id))}
+                      disabled={
+                        subscriptions.includes(Number(article.category_id)) ||
+                        localFollowed.includes(Number(article.category_id))
+                      }
+                    >
+                      {subscriptions.includes(Number(article.category_id)) ||
+                      localFollowed.includes(Number(article.category_id))
+                        ? "Following"
+                        : `Explore ${article.title}`}
+                    </button>
+                  </div>
+                )}
+              />
             )}
           </section>
         </main>

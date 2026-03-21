@@ -19,7 +19,7 @@ interface NotificationState {
   fetchUnread: () => Promise<void>;
 }
 
-export const useNotificationStore = create<NotificationState>((set, get) => ({
+export const useNotificationStore = create<NotificationState>((set) => ({
   count: 0,
   notifications: [],
 

@@ -1,8 +1,38 @@
-AI News Aggregator & Intelligence Platform
+This is the optimized Project Canvas for your AI News Aggregator & Intelligence Platform, following the structure of your previous high-performance architecture models.
+
+🚀 AI News Aggregator & Intelligence Platform
 A high-performance, automated news intelligence platform that ingests, classifies, and serves global news at scale. This project leverages a hybrid database architecture and AI-driven classification to provide a personalized, real-time news experience.
 
-1. Product Vision
-   The goal of this project is to build a professional-grade news engine that supports:
+📂 Project Structure
+Plaintext
+AI_News_Aggregator/
+├── backend/ # Laravel 12 API (Ingestion & AI Logic)
+└── frontend/ # React + Vite + TS SPA (Intelligence UI)
+✅ 1. Set Up Laravel Backend
+Bash
+cd backend
+cp .env.example .env
+composer install
+php artisan key:generate
+php artisan jwt:secret
+php artisan migrate
+php artisan db:seed
+php artisan config:clear
+php artisan config:cache
+php artisan serve
+✅ 2. Set Up React Frontend
+Bash
+cd ../frontend
+cp .env.example .env
+npm install
+npm run dev
+✅ 3. Run in the Root Project
+Bash
+npm run dev
+docker-compose up -d # Starts MySQL, MongoDB, Redis, Elasticsearch
+
+🎯 1. Product Vision
+A professional-grade news engine designed for automated ingestion and AI-enhanced content discovery.
 
 Automated Ingestion: Seamlessly pulling from RSS feeds and REST APIs.
 
@@ -10,91 +40,59 @@ AI Intelligence: Automated categorization and sentiment analysis using LLMs.
 
 High Performance: Hybrid storage (MySQL + MongoDB) to balance relationships and data volume.
 
-Real-Time Delivery: Instant notifications and live feed updates.
+Real-Time Delivery: Instant notifications and live feed updates via Pusher.
 
-Elastic Search: Sub-second full-text search across thousands of articles.
+Elastic Search: Sub-second full-text search across thousands of processed articles.
 
-2. Tech Architecture
-   Backend (Laravel 12)
-   The backend follows a service-oriented, API-first architecture designed for background processing.
-
-API Layer: RESTful API with JWT Authentication.
-
-MySQL: Relational data (Users, Sources, Categories, Subscriptions, Permissions).
-
-MongoDB: High-volume article storage and raw metadata.
-
-Redis: High-speed caching and job queue management.
-
-Elasticsearch: Powerful full-text search and filtering.
-
-Pusher: Real-time event broadcasting for live updates.
-
-Spatie Roles: Advanced Role-Based Access Control (RBAC).
-
+🛠 2. Tech Architecture
 Frontend (React + Vite + TypeScript)
-A modern SPA built for speed and reactive user interactions.
 
-State Management: Zustand for lightweight, global state.
+State: Zustand (Lightweight global state).
 
-Data Fetching: TanStack Query (React Query) for smart caching.
+Data: TanStack Query (Smart caching & background fetching).
 
-Real-Time: Laravel Echo integration with Pusher.
+Real-Time: Laravel Echo integration for live news flashes.
 
-UI/UX: Responsive design with Infinite Scroll for seamless reading.
+UX: Infinite Scroll and Responsive Design for seamless reading.
 
-3. Core Features
-   Data Ingestion
-   Multi-Source Fetching: Supports RSS (XML/Atom) and RESTful JSON APIs.
+Backend (Laravel 12)
 
-Background Processing: Uses Laravel Queues to handle fetching without blocking the UI.
+API: RESTful API with JWT Authentication.
 
-Smart De-duplication: Title and URL hashing to prevent duplicate articles.
+MySQL: Relational data (Users, Sources, Categories, RBAC).
 
-AI & Classification
-Automated Tagging: AI-driven categorization based on content analysis.
+MongoDB: High-volume article storage and raw JSON metadata.
 
-Background Job Retry: Smart handling of AI rate limits and API failures.
+Infrastructure: Redis (Job Queues), Elasticsearch (Search), and Spatie Roles (Permissions).
 
-User Experience
-Category Subscriptions: Users follow specific topics (Tech, World, Sports).
+📋 3. Core Features (Backlog)
+Data Ingestion Pipeline: Multi-source fetching (RSS/JSON) with smart de-duplication and background processing.
 
-Infinite Scroll: Never-ending feed optimized for engagement.
+AI & Classification: Automated tagging and sentiment analysis based on content parsing.
 
-Live Notifications: Real-time alerts via Pusher when breaking news hits.
+User Experience: Category subscriptions, personalized feeds, and infinite scroll optimized for engagement.
 
-Search & Discovery
-Advanced Search: Full-text search powered by Elasticsearch.
+Search & Discovery: Advanced full-text search with Elasticsearch and autocomplete suggestions.
 
-Personalized Feed: Algorithms prioritize articles based on user subscriptions.
+Notifications: Real-time alerts via Pusher when breaking news hits a user's subscribed category.
 
-4. Operational Flow
-1. Ingestion Pipeline
-   The Scheduler triggers FetchNewsJob every 5 minutes. This job reaches out to external APIs and RSS feeds.
+⚙️ 4. Operational Flow (The Pipeline)
+Ingestion: FetchNewsJob triggers every 5 mins to pull from external sources.
 
-1. Processing & Normalization
-   Articles are passed to ProcessArticlesBatchJob where they are:
+Processing: ProcessArticlesBatchJob cleans, validates, and hashes content to prevent duplicates.
 
-Validated and cleaned.
+Classification: Articles are assigned to categories via keyword matching or LLM analysis.
 
-Checked against MongoDB for existing hashes.
+Storage: MySQL stores the "Who" (Users/Sources); MongoDB stores the "What" (Massive Article Volume).
 
-Assigned to categories via keyword matching or AI classification.
+Broadcasting: A NewArticleEvent triggers Pusher, updating the frontend in real-time.
 
-3. Storage Strategy
-   MySQL handles the "Who" (Users, Permissions, Sources).
+⚖️ Architecture Philosophy
+Asynchronous-First: All heavy lifting (AI, API calls, MongoDB writes) stays in the background queue.
 
-MongoDB handles the "What" (The massive volume of Articles and their raw JSON metadata).
+Hybrid Storage: Relational integrity for logic; document-based scale for content.
 
-4. Real-Time Sync
-   New articles trigger a Pusher Event, alerting connected clients that fresh content is available in their feed.
-
-5. Architecture Philosophy
-   Asynchronous-First: All heavy lifting (API calls, AI, MongoDB writes) happens in background queues.
-
-Scalability: The separation of MySQL and MongoDB allows the platform to handle millions of articles.
-
-Hybrid Storage: Uses the best tool for the job—relational for logic, document-based for content.
+Scalability: Decoupled architecture ready to handle millions of articles across distributed nodes.
 
 RSS Fetch Job
 ↓

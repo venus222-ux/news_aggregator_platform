@@ -15,7 +15,7 @@ export default function Navbar() {
   const { count, reset, fetchUnread, notifications } = useNotificationStore();
 
   // 2. Access the subscription store to load categories
-  const { subscriptions, fetchSubscriptions } = useSubscriptionStore();
+  const { fetchSubscriptions } = useSubscriptionStore();
 
   // 3. Initialize the Real-time Engine
   useCategoryNotifications();

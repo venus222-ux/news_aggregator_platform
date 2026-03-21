@@ -2,16 +2,7 @@
 import React, { useRef, useEffect, useCallback, memo, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import ArticleCard from "./ArticleCard";
-
-interface Article {
-  _id?: string;
-  title: string;
-  description?: string;
-  source: string;
-  published_at: string;
-  url: string;
-  [key: string]: any;
-}
+import type { Article } from "../store/useFeedStore";
 
 interface Props {
   articles: Article[];

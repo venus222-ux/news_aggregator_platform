@@ -1,12 +1,15 @@
 // FeedPage.tsx
-import { useEffect, useMemo, useCallback } from "react";
+import { useEffect, useMemo, useCallback, lazy } from "react";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useCategoryStore } from "../store/useCategoryStore";
 import { useNotificationStore } from "../store/useNotificationStore";
 import API from "../api";
 import styles from "./FeedPage.module.css";
-import VirtualizedArticleList from "../components/VirtualizedArticleList";
-import { RecentArticle } from "../store/useDashboardStore";
+const VirtualizedArticleList = lazy(
+  () => import("../components/VirtualizedArticleList"),
+);
+
+import type { Article } from "../store/useFeedStore";
 
 interface Cursor {
   date: string;
@@ -54,28 +57,29 @@ const FeedPage = () => {
 
   const uniqueArticles = useMemo(() => {
     const seen = new Set<string>();
-    const result: RecentArticle[] = [];
+    const result: Article[] = [];
 
     for (const a of articles) {
-      const id = a._id ?? a.url;
-      if (id && !seen.has(id)) {
-        seen.add(id);
-        result.push(a);
-      }
+      const id = String(a._id ?? a.url ?? a.id ?? "");
+
+      if (!id || seen.has(id)) continue;
+
+      seen.add(id);
+
+      result.push({
+        ...a,
+        source: a.source ?? "Unknown source",
+        url: a.url ?? "#",
+      });
     }
 
     return result;
   }, [articles]);
 
-  // Then your useEffect and render logic...
-  // ── Notification handling: avoid depending on unstable articles ──
-  // Better: compare against uniqueArticles (already memoized)
-  // Also clear notifications first to prevent loop if invalidate triggers re-render
   useEffect(() => {
     if (!notifications.length) return;
-
     const hasNew = notifications.some(
-      (n) => !uniqueArticles.some((a) => a._id === n.id),
+      (n) => !uniqueArticles.some((a) => String(a.id) === String(n.id)),
     );
 
     if (hasNew) {

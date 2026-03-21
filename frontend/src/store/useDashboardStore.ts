@@ -8,6 +8,7 @@ export interface RecentArticle {
   url: string;
   category: string;
   published_at: string;
+  source?: string;
 }
 
 interface DashboardState {

@@ -1,22 +1,30 @@
 import { create } from "zustand";
 import API from "../api";
 
-interface Article {
+export interface Article {
+  _id?: string;
+  id?: string | number;
   title: string;
   description?: string;
   source: string;
   published_at: string;
   category_id?: string;
+  url: string;
 }
 
-interface Cursor {
+export interface Cursor {
   date: string;
   id: string;
 }
 
-interface FeedStore {
+export type HomeArticle = Article & {
+  category?: string | { name: string };
+  category_id?: string | number;
+};
+
+export interface FeedStore {
   articles: Article[];
-  nextCursor: Cursor | null; // store as object
+  nextCursor: Cursor | null;
   loading: boolean;
   fetchFeed: (cursor?: Cursor) => Promise<void>;
   resetFeed: () => void;
@@ -38,19 +46,18 @@ export const useFeedStore = create<FeedStore>((set, get) => ({
           : {},
       });
 
-      const newArticles = res.data.data || [];
-      const currentArticles = get().articles;
+      const newArticles: Article[] = (res.data.data || []) as Article[];
+      const currentArticles: Article[] = get().articles;
 
-      // Deduplicate by merging and checking IDs/URLs
-      const merged = cursor
+      const merged: Article[] = cursor
         ? [...currentArticles, ...newArticles]
         : newArticles;
 
-      const uniqueMerged = merged.filter(
-        (article, index, self) =>
+      const uniqueMerged: Article[] = merged.filter(
+        (article: Article, index: number, self: Article[]) =>
           index ===
           self.findIndex(
-            (a) =>
+            (a: Article) =>
               (a._id && a._id === article._id) ||
               (a.url && a.url === article.url),
           ),
@@ -58,7 +65,7 @@ export const useFeedStore = create<FeedStore>((set, get) => ({
 
       set({
         articles: uniqueMerged,
-        nextCursor: res.data.nextCursor || null,
+        nextCursor: (res.data.nextCursor as Cursor) || null,
       });
     } finally {
       set({ loading: false });

@@ -1,33 +1,101 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import axios, {
+  AxiosInstance,
+  AxiosError,
+  InternalAxiosRequestConfig,
+} from "axios";
+
+type FailedQueueItem = {
+  resolve: (token: string) => void;
+  reject: (err: unknown) => void;
+};
+
+type RetryableRequestConfig = InternalAxiosRequestConfig & {
+  _retry?: boolean;
+};
 
 const API: AxiosInstance = axios.create({
   baseURL: "http://localhost:8000/api",
 });
 
 let isRefreshing = false;
-let failedQueue: {
-  resolve: (value?: AxiosResponse<any>) => void;
-  reject: (error?: any) => void;
-}[] = [];
+let failedQueue: FailedQueueItem[] = [];
 
-// Process the queue of failed requests
-const processQueue = (error: any, token: string | null = null) => {
+const processQueue = (data: { error?: unknown; token?: string }) => {
   failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve();
+    if (data.error) {
+      prom.reject(data.error);
+    } else if (data.token) {
+      prom.resolve(data.token);
     }
   });
+
   failedQueue = [];
 };
 
-// Request interceptor – attach token
-API.interceptors.request.use((config: AxiosRequestConfig) => {
-  const token = localStorage.getItem("token");
-  if (token && config.headers) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+API.interceptors.request.use(
+  (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
+    config.headers = config.headers || {};
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+);
+
+API.interceptors.response.use(
+  (res) => res,
+  async (err: AxiosError) => {
+    const originalRequest = err.config as RetryableRequestConfig | undefined;
+
+    if (!originalRequest) {
+      return Promise.reject(err);
+    }
+
+    if (err.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise<string>((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers = originalRequest.headers || {};
+            originalRequest.headers["Authorization"] = `Bearer ${token}`;
+            return API(originalRequest);
+          })
+          .catch((queueError: unknown) => Promise.reject(queueError));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const response = await API.post<{ token: string }>("/refresh");
+        const newToken = response.data.token;
+
+        localStorage.setItem("token", newToken);
+        API.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
+
+        processQueue({ token: newToken });
+
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
+
+        return API(originalRequest);
+      } catch (refreshError: unknown) {
+        processQueue({ error: refreshError });
+        localStorage.removeItem("token");
+        window.location.replace("/login");
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    return Promise.reject(err);
+  },
+);
 
 // Response interceptor – handle 401 + retry
 API.interceptors.response.use(
@@ -37,11 +105,14 @@ API.interceptors.response.use(
 
     if (err.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
-        // Wait for the token refresh to complete
-        return new Promise((resolve, reject) => {
+        return new Promise<string>((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
-          .then(() => API(originalRequest))
+          .then((token) => {
+            originalRequest.headers = originalRequest.headers || {};
+            originalRequest.headers["Authorization"] = `Bearer ${token}`;
+            return API(originalRequest);
+          })
           .catch((e) => Promise.reject(e));
       }
 
@@ -51,12 +122,18 @@ API.interceptors.response.use(
       try {
         const response = await API.post("/refresh");
         const newToken = response.data.token;
+
         localStorage.setItem("token", newToken);
-        API.defaults.headers.common.Authorization = `Bearer ${newToken}`;
-        processQueue(null, newToken);
+        API.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
+
+        processQueue({ token: newToken });
+
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
+
         return API(originalRequest);
       } catch (e) {
-        processQueue(e, null);
+        processQueue({ error: e });
         localStorage.removeItem("token");
         window.location.replace("/login");
         return Promise.reject(e);
@@ -68,7 +145,6 @@ API.interceptors.response.use(
     return Promise.reject(err);
   },
 );
-
 // --- Types ---
 export interface LoginRequest {
   email: string;

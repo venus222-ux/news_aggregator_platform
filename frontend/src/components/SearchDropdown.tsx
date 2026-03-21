@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { searchArticles } from "../api";
-import { useNavigate } from "react-router-dom"; // still needed if you use it elsewhere
 
 const SearchDropdown = ({
   query,
@@ -10,7 +9,6 @@ const SearchDropdown = ({
   onClose?: () => void;
 }) => {
   const [results, setResults] = useState<any[]>([]);
-  const navigate = useNavigate(); // kept for future use
 
   useEffect(() => {
     if (!query.trim()) {

@@ -1,25 +1,17 @@
-// Home.tsx
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, lazy } from "react";
 import { Link } from "react-router-dom";
 import { useStore } from "../store/useStore";
 import { useCategoryStore } from "../store/useCategoryStore";
 import { useNotificationStore } from "../store/useNotificationStore";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import ArticleCard from "../components/ArticleCard";
-import VirtualizedArticleList from "../components/VirtualizedArticleList";
+const ArticleCard = lazy(() => import("../components/ArticleCard"));
+const VirtualizedArticleList = lazy(
+  () => import("../components/VirtualizedArticleList"),
+);
+
 import API from "../api";
 import styles from "./Home.module.css";
-
-interface Article {
-  _id?: string;
-  url: string;
-  title: string;
-  description?: string;
-  source: string;
-  published_at: string;
-  category_id?: number | string;
-  category?: { name: string } | string;
-}
+import type { Article, Cursor, HomeArticle } from "../store/useFeedStore";
 
 const Home = () => {
   const { isAuth } = useStore();
@@ -27,15 +19,11 @@ const Home = () => {
   const { notifications, setNotifications } = useNotificationStore();
   const queryClient = useQueryClient();
 
-  // ── Stabilize subscriptions for query key ──
   const sortedSubscriptions = useMemo(
     () => [...subscriptions].sort((a, b) => a - b),
     [subscriptions],
   );
 
-  /* ----------------------
-     Personalized Feed
-  ---------------------- */
   const {
     data,
     fetchNextPage,
@@ -45,7 +33,7 @@ const Home = () => {
     error,
   } = useInfiniteQuery({
     queryKey: ["feed", sortedSubscriptions],
-    queryFn: ({ pageParam }) =>
+    queryFn: ({ pageParam }: { pageParam?: Cursor }) =>
       API.get("/feed", {
         params: pageParam
           ? { cursor_date: pageParam.date, cursor_id: pageParam.id }
@@ -53,19 +41,20 @@ const Home = () => {
       }).then((res) => res.data),
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     enabled: isAuth,
-    refetchOnWindowFocus: false, // ← prevent aggressive refetch on focus
-    staleTime: 3 * 60 * 1000, // 3 minutes – adjust as needed
-    initialPageParam: undefined,
+    refetchOnWindowFocus: false,
+    staleTime: 3 * 60 * 1000,
+    initialPageParam: undefined as Cursor | undefined,
   });
 
   const articles = useMemo(
-    () => data?.pages.flatMap((p) => p.data) || [],
+    () => (data?.pages.flatMap((p) => p.data) || []) as Article[],
     [data],
   );
 
   const uniqueArticles = useMemo(() => {
     const seen = new Set<string>();
-    return articles.filter((a: Article) => {
+
+    return articles.filter((a) => {
       const id = a._id ?? a.url;
       if (!id || seen.has(id)) return false;
       seen.add(id);
@@ -79,11 +68,9 @@ const Home = () => {
     [notifications, uniqueArticles],
   );
 
-  // ── Handle new notifications without creating render loop ──
   useEffect(() => {
     if (!hasNewNotifications) return;
 
-    // Invalidate only active queries + prevent loop by clearing notifications first
     setNotifications([]);
     queryClient.invalidateQueries({
       queryKey: ["feed"],
@@ -92,10 +79,7 @@ const Home = () => {
     });
   }, [hasNewNotifications, queryClient, setNotifications]);
 
-  /* ----------------------
-     Discover Feed
-  ---------------------- */
-  const [discoverArticles, setDiscoverArticles] = useState<Article[]>([]);
+  const [discoverArticles, setDiscoverArticles] = useState<HomeArticle[]>([]);
   const [discoverLoading, setDiscoverLoading] = useState(false);
   const [localFollowed, setLocalFollowed] = useState<number[]>([]);
 
@@ -103,7 +87,7 @@ const Home = () => {
     setDiscoverLoading(true);
     try {
       const res = await API.get("/feed/discover");
-      setDiscoverArticles(res.data.data || []);
+      setDiscoverArticles((res.data.data || []) as HomeArticle[]);
     } catch (err) {
       console.error("Discover fetch failed:", err);
     } finally {
@@ -128,7 +112,6 @@ const Home = () => {
         setLocalFollowed((prev) => [...prev, categoryId]);
         await subscribe(categoryId);
 
-        // Remove followed category from discover
         setDiscoverArticles((prev) =>
           prev.filter((a) => Number(a.category_id) !== categoryId),
         );
@@ -140,36 +123,40 @@ const Home = () => {
     [subscriptions, localFollowed, subscribe],
   );
 
-  // ── Deduplicate discover by category + stabilize shape ──
   const uniqueDiscover = useMemo(() => {
-    const map = new Map<number, Article>();
+    const map = new Map<number, HomeArticle>();
+
     discoverArticles.forEach((a) => {
       const catId = Number(a.category_id);
       if (!map.has(catId)) map.set(catId, a);
     });
+
     return Array.from(map.values());
   }, [discoverArticles]);
 
-  const discoverList = useMemo(
+  const discoverList = useMemo<Article[]>(
     () =>
       uniqueDiscover.map((a) => ({
-        ...a,
+        _id: a._id,
+        id: a.id,
         title:
-          a.category?.name ||
-          (typeof a.category === "string" ? a.category : "Topic"),
+          typeof a.category === "object" && a.category !== null
+            ? a.category.name
+            : typeof a.category === "string"
+              ? a.category
+              : "Topic",
+        description: a.description,
         source: "Category",
         published_at: a.published_at || new Date().toISOString(),
-        url: `category-${a.category_id}`,
+        category_id:
+          a.category_id !== undefined ? String(a.category_id) : undefined,
+        url: `category-${String(a.category_id ?? "")}`,
       })),
     [uniqueDiscover],
   );
 
-  /* ----------------------
-     Render
-  ---------------------- */
   return (
     <div className={styles.homePage}>
-      {/* HERO */}
       <section className={styles.hero}>
         <div className={styles.heroInner}>
           <h1 className={styles.heroTitle}>
@@ -194,7 +181,6 @@ const Home = () => {
 
       {isAuth && (
         <main className={styles.mainContent}>
-          {/* Personalized Feed */}
           <section className={styles.section}>
             <div className={styles.sectionHeader}>
               <h2 className={styles.sectionTitle}>For You</h2>
@@ -220,7 +206,7 @@ const Home = () => {
             ) : (
               <VirtualizedArticleList
                 articles={uniqueArticles}
-                fetchNextPage={hasNextPage ? fetchNextPage : undefined}
+                fetchNextPage={hasNextPage ? () => fetchNextPage() : undefined}
               />
             )}
 
@@ -229,7 +215,6 @@ const Home = () => {
             )}
           </section>
 
-          {/* Discover Topics */}
           <section className={styles.section}>
             <div className={styles.sectionHeader}>
               <h2 className={styles.sectionTitle}>Discover Topics</h2>

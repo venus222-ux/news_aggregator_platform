@@ -11,7 +11,7 @@ import styles from "./Navbar.module.css";
 import useCategoryNotifications from "../../hooks/useCategoryNotifications";
 
 export default function Navbar() {
-  const { isAuth, setIsAuth, theme, toggleTheme } = useStore();
+  const { isAuth, setAuth, theme, toggleTheme } = useStore();
   const { count, reset, fetchUnread, notifications } = useNotificationStore();
 
   // 2. Access the subscription store to load categories
@@ -40,7 +40,7 @@ export default function Navbar() {
   }, [isAuth]);
 
   const handleLogout = () => {
-    setIsAuth(false);
+    useStore.getState().logout(); // call the logout function from the store
     localStorage.removeItem("token");
     navigate("/login");
     setExpanded(false);

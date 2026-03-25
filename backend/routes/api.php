@@ -13,25 +13,26 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FeedController;
 use Illuminate\Support\Facades\Broadcast;
 
-Broadcast::routes(['middleware' => ['auth:api']]);
+Broadcast::routes(['middleware' => ['jwt.auth']]);
 
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+Route::post('/refresh', [AuthController::class, 'refresh']);
 
 
 
 // Protected routes with auth + throttle
-Route::middleware(['auth:api', 'throttle:60,1'])->group(function () {
+Route::middleware(['jwt.auth', 'throttle:60,1'])->group(function () {
 
     //Profile
     Route::get('/logout', [AuthController::class, 'logout']);
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::put('/profile', [AuthController::class, 'updateProfile']);
     Route::delete('/profile', [AuthController::class, 'destroyProfile']);
-    Route::post('/refresh', [AuthController::class, 'refresh']);
+
 
 
     Route::get('/me', [AuthController::class, 'me']);
@@ -55,7 +56,7 @@ Route::middleware(['auth:api', 'throttle:60,1'])->group(function () {
 
     //Dashboard
     Route::get('/dashboard', [DashboardController::class, 'stats']);
-    Route::get('/notifications/unread', [NotificationController::class, 'unreadCount']); 
+    Route::get('/notifications/unread', [NotificationController::class, 'unreadCount']);
     Route::post('/notifications/mark-read', [NotificationController::class, 'markRead']);
 
   Route::middleware(['admin'])->group(function () {

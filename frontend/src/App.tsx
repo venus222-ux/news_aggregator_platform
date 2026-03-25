@@ -1,11 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, lazy, useEffect, useRef } from "react";
 import Navbar from "./components/Navbar/Navbar";
 import { ToastContainer } from "react-toastify";
 import { useStore } from "./store/useStore";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { refreshToken } from "./api"; // Import your refresh call
 
-// Lazy-loaded pages/components
+// Lazy-loaded pages
 const Login = lazy(() => import("./pages/Login/Login"));
 const Register = lazy(() => import("./pages/Register/Register"));
 const ForgotPassword = lazy(() => import("./pages/ForgetPassword"));
@@ -24,38 +25,82 @@ const CategoryList = lazy(
 const SearchPage = lazy(() => import("./pages/SearchPage"));
 
 const App = () => {
-  const { theme, isAuth, startTokenRefreshLoop } = useStore();
+  const {
+    theme,
+    isAuth,
+    role,
+    initialized,
+    setAuth,
+    setInitialized,
+    logout,
+    startTokenRefreshLoop,
+  } = useStore();
+  const hasRun = useRef(false);
 
+  // 1. Handle Theme and Auth Restoration
   useEffect(() => {
+    if (hasRun.current) return;
+    hasRun.current = true;
+
     document.documentElement.setAttribute("data-bs-theme", theme);
 
-    if (isAuth) startTokenRefreshLoop(); // auto refresh if logged in
-  }, [theme, isAuth, startTokenRefreshLoop]);
+    const restoreSession = async () => {
+      if (isAuth) {
+        startTokenRefreshLoop();
+        setInitialized(true);
+        return;
+      }
+
+      try {
+        const res = await refreshToken();
+        setAuth(res.data.token, res.data.role);
+        startTokenRefreshLoop();
+      } catch (err) {
+        logout();
+      } finally {
+        setInitialized(true);
+      }
+    };
+
+    restoreSession();
+  }, []);
+
+  // 2. Show a global loader until we know if the user is logged in
+  if (!initialized) {
+    return (
+      <div className="d-flex justify-content-center align-items-center vh-100">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Initializing...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <BrowserRouter>
       <Navbar />
       <Suspense
         fallback={
-          <div style={{ textAlign: "center", marginTop: "2rem" }}>
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <p>Loading page...</p>
+          <div className="text-center mt-5">
+            <div className="spinner-border text-primary" role="status"></div>
+            <p className="mt-2">Loading page...</p>
           </div>
         }
       >
         <Routes>
           <Route path="/" element={<Home />} />
+
+          {/* Guest Routes: Redirect if already logged in */}
           <Route
             path="/login"
             element={
               !isAuth ? (
                 <Login />
-              ) : useStore.getState().role === "admin" ? (
-                <Navigate to="/admin/dashboard" />
               ) : (
-                <Navigate to="/dashboard" />
+                <Navigate
+                  to={role === "admin" ? "/admin/dashboard" : "/dashboard"}
+                  replace
+                />
               )
             }
           />
@@ -64,23 +109,61 @@ const App = () => {
             element={
               !isAuth ? (
                 <Register />
-              ) : useStore.getState().role === "admin" ? (
-                <Navigate to="/admin/dashboard" />
               ) : (
-                <Navigate to="/dashboard" />
+                <Navigate
+                  to={role === "admin" ? "/admin/dashboard" : "/dashboard"}
+                  replace
+                />
               )
             }
           />
+
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
+
+          {/* Protected User Routes */}
           <Route
             path="/dashboard"
-            element={isAuth ? <Dashboard /> : <Navigate to="/login" />}
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
           />
           <Route
             path="/profile"
-            element={isAuth ? <Profile /> : <Navigate to="/login" />}
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
           />
+          <Route
+            path="/categories"
+            element={
+              <ProtectedRoute>
+                <CategoryList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/feed"
+            element={
+              <ProtectedRoute>
+                <FeedPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/search"
+            element={
+              <ProtectedRoute>
+                <SearchPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Protected Admin Routes */}
           <Route
             path="/admin/dashboard"
             element={
@@ -89,24 +172,7 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/categories"
-            element={isAuth ? <CategoryList /> : <Navigate to="/login" />}
-          />
 
-          {/* ✅ Feed route must be inside Routes */}
-          <Route
-            path="/feed"
-            element={isAuth ? <FeedPage /> : <Navigate to="/login" />}
-          />
-
-          {/* ✅ Search */}
-          <Route
-            path="/search"
-            element={isAuth ? <SearchPage /> : <Navigate to="/login" />}
-          />
-
-          {/* Catch-all route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

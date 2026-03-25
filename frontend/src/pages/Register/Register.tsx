@@ -2,6 +2,7 @@ import { useState, FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import API from "../../api";
 import { toast } from "react-toastify";
+import { useStore } from "../../store/useStore";
 import styles from "./Register.module.css";
 
 interface FormData {
@@ -22,6 +23,9 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // optional: keep role only (no token)
+  const setAuth = useStore((state) => state.setAuth);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
@@ -29,7 +33,7 @@ const Register = () => {
   const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
 
-    // Client-side validation
+    // ✅ Validation (unchanged)
     if (form.password !== form.password_confirmation) {
       toast.error("Passwords do not match");
       return;
@@ -43,15 +47,25 @@ const Register = () => {
     setLoading(true);
 
     try {
+      // ✅ HttpOnly cookie set by backend
       const response = await API.post("/register", form);
 
-      if (response.data.token) {
-        localStorage.setItem("token", response.data.token);
-        toast.success("Registration successful! Redirecting...");
-        setTimeout(() => navigate("/dashboard"), 1500);
+      const role = response.data?.role;
+
+      // ✅ store only role (optional)
+      if (role) {
+        setAuth(null, role);
+      }
+
+      toast.success("Registration successful! 👋");
+
+      // ✅ Choose behavior (auto-login or redirect to login)
+      if (role) {
+        // auto-login flow (if backend logs user in)
+        navigate(role === "admin" ? "/admin/dashboard" : "/dashboard");
       } else {
-        toast.success("Registration successful! Please login.");
-        setTimeout(() => navigate("/login"), 1500);
+        // classic flow (user must login)
+        navigate("/login");
       }
     } catch (error: any) {
       console.error("Registration failed:", error);
@@ -97,6 +111,7 @@ const Register = () => {
                   value={form.name}
                   onChange={handleChange}
                   required
+                  autoComplete="name"
                 />
               </div>
             </div>
@@ -115,6 +130,7 @@ const Register = () => {
                   value={form.email}
                   onChange={handleChange}
                   required
+                  autoComplete="email"
                 />
               </div>
             </div>
@@ -134,6 +150,7 @@ const Register = () => {
                   onChange={handleChange}
                   required
                   minLength={6}
+                  autoComplete="new-password"
                 />
               </div>
             </div>
@@ -152,11 +169,13 @@ const Register = () => {
                   value={form.password_confirmation}
                   onChange={handleChange}
                   required
+                  autoComplete="new-password"
                 />
               </div>
+
               {form.password !== form.password_confirmation &&
                 form.password_confirmation && (
-                  <div className={styles.error}>Passwords do not match</div>
+                  <div className={styles.error}>❌ Passwords do not match</div>
                 )}
             </div>
 

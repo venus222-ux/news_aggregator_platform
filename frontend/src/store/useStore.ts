@@ -8,7 +8,7 @@ interface AppState {
   theme: "light" | "dark";
   initialized: boolean;
 
-  setAuth: (token: string, role: string) => void;
+  setAuth: (token: string | null, role: string | null) => void;
   logout: () => void;
   setToken: (token: string | null) => void;
   toggleTheme: () => void;
@@ -30,9 +30,9 @@ export const useStore = create<AppState>((set, get) => {
 
     setAuth: (token, role) =>
       set({
-        isAuth: true,
-        token,
-        role,
+        isAuth: !!token, // true only if token is truthy
+        token: token ?? null,
+        role: role ?? null,
       }),
 
     logout: () => {

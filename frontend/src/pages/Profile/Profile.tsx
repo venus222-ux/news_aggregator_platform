@@ -3,6 +3,7 @@ import API from "../../api";
 import { toast } from "react-toastify";
 import { useStore } from "../../store/useStore";
 import styles from "./Profile.module.css";
+import { useNavigate } from "react-router-dom";
 
 interface ProfileData {
   email: string;
@@ -24,7 +25,8 @@ const Profile = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const setIsAuth = useStore((state) => state.setIsAuth);
+  const logout = useStore((state) => state.logout);
+  const navigate = useNavigate();
 
   useEffect(() => {
     API.get("/profile")
@@ -64,9 +66,8 @@ const Profile = () => {
     API.delete("/profile")
       .then(() => {
         toast.success("Account deleted");
-        setIsAuth(false);
-        localStorage.removeItem("token");
-        window.location.replace("/login");
+        logout();
+        navigate("/login");
       })
       .catch(() => toast.error("Failed to delete account"));
   };

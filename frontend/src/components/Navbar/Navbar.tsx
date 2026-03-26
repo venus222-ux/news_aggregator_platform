@@ -1,4 +1,3 @@
-// src/components/Navbar/Navbar.tsx
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useStore } from "../../store/useStore";
 import { useNotificationStore } from "../../store/useNotificationStore";
@@ -6,18 +5,15 @@ import { useSubscriptionStore } from "../../store/useSubscriptionStore";
 import { useState, useEffect, useRef } from "react";
 import SearchDropdown from "../SearchDropdown";
 import styles from "./Navbar.module.css";
-
-// 1. Import the Real-time Hook
 import useCategoryNotifications from "../../hooks/useCategoryNotifications";
 
 export default function Navbar() {
-  const { isAuth, setAuth, theme, toggleTheme } = useStore();
+  const { isAuth, theme, toggleTheme, logout, initialized } = useStore();
+
   const { count, reset, fetchUnread, notifications } = useNotificationStore();
 
-  // 2. Access the subscription store to load categories
   const { fetchSubscriptions } = useSubscriptionStore();
 
-  // 3. Initialize the Real-time Engine
   useCategoryNotifications();
 
   const navigate = useNavigate();
@@ -31,7 +27,10 @@ export default function Navbar() {
   const closeMenu = () => setExpanded(false);
   const isActive = (path: string) => location.pathname === path;
 
-  // 4. Fetch necessary data when the user logs in or refreshes
+  // 🔥 Prevent navbar flicker
+  if (!initialized) return null;
+
+  // Fetch data when logged in
   useEffect(() => {
     if (!isAuth) return;
 
@@ -40,18 +39,19 @@ export default function Navbar() {
   }, [isAuth]);
 
   const handleLogout = () => {
-    useStore.getState().logout(); // call the logout function from the store
+    logout();
     localStorage.removeItem("token");
     navigate("/login");
-    setExpanded(false);
+    closeMenu();
   };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
+
     navigate(`/search?q=${encodeURIComponent(query)}`);
     setQuery("");
-    setExpanded(false);
+    closeMenu();
   };
 
   const handleNotificationClick = (url: string) => {
@@ -60,6 +60,7 @@ export default function Navbar() {
     reset();
   };
 
+  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -69,6 +70,7 @@ export default function Navbar() {
         setDropdownOpen(false);
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -76,12 +78,14 @@ export default function Navbar() {
   return (
     <nav className={`${styles.navbar} ${theme === "dark" ? styles.dark : ""}`}>
       <div className={styles.container}>
+        {/* LEFT SIDE */}
         <div className="d-flex align-items-center">
           <Link className={styles.brand} to="/" onClick={closeMenu}>
             <i className="bi bi-newspaper"></i>
             <span>NewsHub</span>
           </Link>
 
+          {/* 🔍 Search (only if logged in) */}
           {isAuth && (
             <div className={styles.searchWrapper}>
               <form className={styles.searchBar} onSubmit={handleSearch}>
@@ -94,11 +98,13 @@ export default function Navbar() {
                   className={styles.searchInput}
                 />
               </form>
+
               <SearchDropdown query={query} onClose={() => setQuery("")} />
             </div>
           )}
         </div>
 
+        {/* MOBILE BUTTON */}
         <button
           className="btn d-lg-none border-0"
           onClick={() => setExpanded(!expanded)}
@@ -108,33 +114,57 @@ export default function Navbar() {
           ></i>
         </button>
 
+        {/* MENU */}
         <div className={`${styles.navCollapse} ${expanded ? styles.show : ""}`}>
           <div className={styles.navItems}>
-            <Link
-              className={`${styles.navBtn} ${isActive("/dashboard") ? styles.active : ""}`}
-              to="/dashboard"
-              onClick={closeMenu}
-            >
-              Dashboard
-            </Link>
-            <Link
-              className={`${styles.navBtn} ${isActive("/feed") ? styles.active : ""}`}
-              to="/feed"
-              onClick={closeMenu}
-            >
-              Feed
-            </Link>
+            {/* 🔐 AUTH MENU */}
             {isAuth && (
-              <Link
-                className={`${styles.navBtn} ${isActive("/categories") ? styles.active : ""}`}
-                to="/categories"
-                onClick={closeMenu}
-              >
-                Categories
-              </Link>
+              <>
+                <Link
+                  className={`${styles.navBtn} ${
+                    isActive("/dashboard") ? styles.active : ""
+                  }`}
+                  to="/dashboard"
+                  onClick={closeMenu}
+                >
+                  Dashboard
+                </Link>
+
+                <Link
+                  className={`${styles.navBtn} ${
+                    isActive("/feed") ? styles.active : ""
+                  }`}
+                  to="/feed"
+                  onClick={closeMenu}
+                >
+                  Feed
+                </Link>
+
+                <Link
+                  className={`${styles.navBtn} ${
+                    isActive("/profile") ? styles.active : ""
+                  }`}
+                  to="/profile"
+                  onClick={closeMenu}
+                >
+                  Profile
+                </Link>
+
+                <Link
+                  className={`${styles.navBtn} ${
+                    isActive("/categories") ? styles.active : ""
+                  }`}
+                  to="/categories"
+                  onClick={closeMenu}
+                >
+                  Categories
+                </Link>
+              </>
             )}
 
+            {/* RIGHT SIDE */}
             <div className="d-flex align-items-center ms-lg-3 gap-2">
+              {/* 🔔 Notifications */}
               {isAuth && (
                 <div className={styles.notificationWrapper} ref={dropdownRef}>
                   <div
@@ -152,6 +182,7 @@ export default function Navbar() {
                       <div className={styles.notificationHeader}>
                         Notifications
                       </div>
+
                       <div className={styles.notificationList}>
                         {notifications.length === 0 ? (
                           <div className="p-4 text-center text-muted small">
@@ -178,13 +209,35 @@ export default function Navbar() {
                 </div>
               )}
 
+              {/* 🌙 Theme toggle */}
               <button className={styles.themeBtn} onClick={toggleTheme}>
                 <i
-                  className={`bi bi-${theme === "light" ? "moon-stars-fill" : "sun-fill"}`}
+                  className={`bi bi-${
+                    theme === "light" ? "moon-stars-fill" : "sun-fill"
+                  }`}
                 ></i>
               </button>
 
-              {isAuth && (
+              {/* 🔑 Auth buttons */}
+              {!isAuth ? (
+                <>
+                  <Link
+                    to="/login"
+                    className={styles.navBtn}
+                    onClick={closeMenu}
+                  >
+                    Login
+                  </Link>
+
+                  <Link
+                    to="/register"
+                    className={styles.navBtn}
+                    onClick={closeMenu}
+                  >
+                    Register
+                  </Link>
+                </>
+              ) : (
                 <button className={styles.logoutBtn} onClick={handleLogout}>
                   Logout
                 </button>

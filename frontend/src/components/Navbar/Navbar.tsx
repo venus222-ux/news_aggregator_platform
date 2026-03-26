@@ -8,13 +8,46 @@ import styles from "./Navbar.module.css";
 import useCategoryNotifications from "../../hooks/useCategoryNotifications";
 
 export default function Navbar() {
-  const { isAuth, theme, toggleTheme, logout, initialized } = useStore();
+  // Destructure with fallbacks to prevent undefined errors
+  const {
+    isAuth = false,
+    initialized = false,
+    theme = "light",
+    toggleTheme,
+    logout,
+  } = useStore();
 
   const { count, reset, fetchUnread, notifications } = useNotificationStore();
-
   const { fetchSubscriptions } = useSubscriptionStore();
 
+  // Safe hook call – the hook itself now checks for echo and subscriptions array
   useCategoryNotifications();
+
+  // Only fetch notifications/subscriptions when authenticated and initialized
+  useEffect(() => {
+    if (!initialized || !isAuth) return;
+
+    const fetchData = async () => {
+      try {
+        await fetchUnread();
+      } catch (err: any) {
+        // Ignore aborted requests (common during fast navigation)
+        if (err?.message !== "Request aborted") {
+          console.error("fetchUnread failed", err);
+        }
+      }
+
+      try {
+        await fetchSubscriptions();
+      } catch (err: any) {
+        if (err?.message !== "Request aborted") {
+          console.error("fetchSubscriptions failed", err);
+        }
+      }
+    };
+
+    fetchData();
+  }, [initialized, isAuth, fetchUnread, fetchSubscriptions]);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,17 +59,6 @@ export default function Navbar() {
 
   const closeMenu = () => setExpanded(false);
   const isActive = (path: string) => location.pathname === path;
-
-  // 🔥 Prevent navbar flicker
-  if (!initialized) return null;
-
-  // Fetch data when logged in
-  useEffect(() => {
-    if (!isAuth) return;
-
-    fetchUnread();
-    fetchSubscriptions();
-  }, [isAuth]);
 
   const handleLogout = () => {
     logout();
@@ -60,7 +82,7 @@ export default function Navbar() {
     reset();
   };
 
-  // Close dropdown on outside click
+  // Close notification dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (

@@ -50,12 +50,8 @@ const Register = () => {
       // ✅ HttpOnly cookie set by backend
       const response = await API.post("/register", form);
 
-      const role = response.data?.role;
-
-      // ✅ store only role (optional)
-      if (role) {
-        setAuth(null, role);
-      }
+      const { token, role } = response.data;
+      setAuth(token, role); // ✅ both are strings
 
       toast.success("Registration successful! 👋");
 

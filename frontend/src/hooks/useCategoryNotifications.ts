@@ -1,4 +1,3 @@
-// src/hooks/useCategoryNotifications.ts
 import { useEffect, useRef } from "react";
 import echo from "../echo";
 import { useStore } from "../store/useStore";
@@ -9,41 +8,49 @@ export default function useCategoryNotifications() {
   const { isAuth } = useStore();
   const { subscriptions } = useSubscriptionStore();
   const addNotification = useNotificationStore((s) => s.addNotification);
-
-  // Use a ref to track which channels we are currently listening to
   const listenedChannels = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    if (!isAuth || subscriptions.length === 0) return;
+    // Guard: Echo must be ready and have the required method
+    if (!echo || typeof echo.private !== "function") {
+      console.warn("Echo not ready, skipping subscriptions");
+      return;
+    }
+
+    // Guard: subscriptions must be an array
+    if (
+      !isAuth ||
+      !Array.isArray(subscriptions) ||
+      subscriptions.length === 0
+    ) {
+      return;
+    }
 
     subscriptions.forEach((categoryId) => {
       const channelName = `category.${categoryId}`;
-
-      // Prevent duplicate listeners on the same channel
       if (listenedChannels.current.has(channelName)) return;
 
-      console.log("📡 Subscribing to:", channelName);
-
-      echo.private(channelName).listen(".article.created", (data: any) => {
-        console.log("🔥 Event received for:", channelName, data);
-
-        const article = data.article;
-        addNotification({
-          id: article.id.toString(),
-          title: article.title,
-          url: `/articles/${article.id}`,
+      try {
+        echo.private(channelName).listen(".article.created", (data: any) => {
+          const article = data.article;
+          addNotification({
+            id: article.id.toString(),
+            title: article.title,
+            url: `/articles/${article.id}`,
+          });
         });
-      });
-
-      listenedChannels.current.add(channelName);
+        listenedChannels.current.add(channelName);
+      } catch (err) {
+        console.error(`Failed to subscribe to ${channelName}:`, err);
+      }
     });
 
-    // Cleanup: When subscriptions change or component unmounts,
-    // leave channels and clear the tracked set.
+    // Cleanup
     return () => {
       listenedChannels.current.forEach((channelName) => {
-        console.log("🚪 Leaving:", channelName);
-        echo.leave(channelName);
+        if (echo && typeof echo.leave === "function") {
+          echo.leave(channelName);
+        }
       });
       listenedChannels.current.clear();
     };

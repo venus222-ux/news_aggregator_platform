@@ -1,16 +1,23 @@
 <?php
-
 namespace App\Observers;
 
 use App\Models\User;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class UserObserver
 {
-    public function updated(User $user)
-    {
-        if ($user->isDirty('subscriptions')) { // Pseudo-check; implement as needed
-            Cache::tags(["user:{$user->id}"])->flush();
-        }
+public function creating(User $user)
+{
+    if ($user->name) {
+        $user->name = ucfirst(trim($user->name));
     }
+}
+
+public function saving(User $user)
+{
+    if ($user->name) {
+        $user->name = ucfirst(trim($user->name));
+    }
+}
+
 }

@@ -7,6 +7,8 @@ export interface Notification {
   title: string;
   url: string;
   read?: boolean;
+  source?: string;
+  published_at?: string;
 }
 
 interface NotificationState {

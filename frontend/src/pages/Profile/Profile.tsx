@@ -1,9 +1,8 @@
-import { useEffect, useState, FormEvent, ChangeEvent } from "react";
+import { useEffect, useState, ChangeEvent, FormEvent } from "react";
 import API from "../../api";
 import { toast } from "react-toastify";
 import { useStore } from "../../store/useStore";
 import styles from "./Profile.module.css";
-import { useNavigate } from "react-router-dom";
 
 interface ProfileData {
   email: string;
@@ -25,14 +24,14 @@ const Profile = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const logout = useStore((state) => state.logout);
-  const navigate = useNavigate();
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     API.get("/profile")
       .then((res) => {
-        setProfile(res.data);
-        setFormData((prev) => ({ ...prev, email: res.data.email || "" }));
+        const userData = res.data.data; // ← get the `data` key
+        setProfile(userData);
+        setFormData((prev) => ({ ...prev, email: userData.email || "" }));
         setLoading(false);
       })
       .catch(() => {
@@ -55,121 +54,115 @@ const Profile = () => {
       );
   };
 
-  const handleDelete = () => {
-    if (
-      !window.confirm(
-        "Are you sure? This will permanently delete your account.",
-      )
-    )
-      return;
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure?")) return;
 
-    API.delete("/profile")
-      .then(() => {
-        toast.success("Account deleted");
-        logout();
-        navigate("/login");
-      })
-      .catch(() => toast.error("Failed to delete account"));
+    setDeleting(true);
+    try {
+      await API.delete("/profile");
+      toast.success("Account deleted");
+      useStore.getState().logout();
+      window.location.replace("/login");
+    } catch {
+      toast.error("Failed to delete account");
+    } finally {
+      setDeleting(false);
+    }
   };
 
-  if (loading) return <p className={styles.loading}>Loading...</p>;
-  if (error) return <p className={styles.error}>{error}</p>;
+  if (loading)
+    return <div className={styles.loading}>Loading your profile...</div>;
+  if (error)
+    return (
+      <div className={styles.container} style={{ color: "red" }}>
+        {error}
+      </div>
+    );
 
   return (
     <div className={styles.container}>
-      <div className={styles.card}>
-        <div className={styles.cardHeader}>
-          <h3 className={styles.title}>
-            <i className="bi bi-person-circle me-2"></i>Profile
-          </h3>
+      <header className={styles.header}>
+        <span style={{ fontSize: "2rem" }}>👤</span>
+        <h2 className={styles.title}>Account Settings</h2>
+      </header>
+
+      <section className={styles.infoSection}>
+        <div>
+          <span className={styles.infoLabel}>Email Address</span>
+          <div className={styles.infoValue}>{profile?.email || "N/A"}</div>
         </div>
-        <div className={styles.cardBody}>
-          <div className={styles.infoSection}>
-            <div className={styles.infoItem}>
-              <span className={styles.label}>Email</span>
-              <span className={styles.value}>{profile?.email || "—"}</span>
-            </div>
-            <div className={styles.infoItem}>
-              <span className={styles.label}>Joined</span>
-              <span className={styles.value}>
-                {profile?.created_at
-                  ? new Date(profile.created_at).toLocaleDateString(undefined, {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })
-                  : "—"}
-              </span>
-            </div>
-          </div>
-
-          <hr className={styles.divider} />
-
-          <h5 className={styles.subtitle}>
-            <i className="bi bi-pencil-square me-2"></i>Edit Information
-          </h5>
-          <form onSubmit={handleUpdate} className={styles.form}>
-            <div className={styles.fieldGroup}>
-              <label className={styles.fieldLabel}>Email</label>
-              <div className={styles.inputGroup}>
-                <span className={styles.inputIcon}>
-                  <i className="bi bi-envelope"></i>
-                </span>
-                <input
-                  className={styles.input}
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
-            <div className={styles.fieldGroup}>
-              <label className={styles.fieldLabel}>New Password</label>
-              <div className={styles.inputGroup}>
-                <span className={styles.inputIcon}>
-                  <i className="bi bi-lock"></i>
-                </span>
-                <input
-                  type="password"
-                  className={styles.input}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  autoComplete="new-password"
-                />
-              </div>
-            </div>
-            <div className={styles.fieldGroup}>
-              <label className={styles.fieldLabel}>Confirm Password</label>
-              <div className={styles.inputGroup}>
-                <span className={styles.inputIcon}>
-                  <i className="bi bi-lock"></i>
-                </span>
-                <input
-                  type="password"
-                  className={styles.input}
-                  name="password_confirmation"
-                  value={formData.password_confirmation}
-                  onChange={handleChange}
-                  autoComplete="new-password"
-                />
-              </div>
-            </div>
-            <button type="submit" className={styles.updateBtn}>
-              <i className="bi bi-check-circle me-2"></i>Update Profile
-            </button>
-          </form>
-
-          <hr className={styles.divider} />
-
-          <div className={styles.deleteSection}>
-            <button className={styles.deleteBtn} onClick={handleDelete}>
-              <i className="bi bi-trash3 me-2"></i>Delete Account
-            </button>
+        <div>
+          <span className={styles.infoLabel}>Member Since</span>
+          <div className={styles.infoValue}>
+            {profile?.created_at
+              ? new Date(profile.created_at).toLocaleDateString()
+              : "Unknown"}
           </div>
         </div>
+      </section>
+
+      <form onSubmit={handleUpdate} autoComplete="off">
+        <div className={styles.formGroup}>
+          <label className={styles.label}>Email</label>
+          <input
+            className={styles.input}
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className={styles.formGroup}>
+          <label className={styles.label}>New Password</label>
+          <input
+            type="password"
+            className={styles.input}
+            name="password"
+            placeholder="Leave blank to keep current"
+            value={formData.password}
+            onChange={handleChange}
+            autoComplete="new-password"
+          />
+        </div>
+
+        <div className={styles.formGroup}>
+          <label className={styles.label}>Confirm New Password</label>
+          <input
+            type="password"
+            className={styles.input}
+            name="password_confirmation"
+            value={formData.password_confirmation}
+            onChange={handleChange}
+            autoComplete="new-password"
+          />
+        </div>
+
+        <button type="submit" className={styles.btnPrimary}>
+          Save Changes
+        </button>
+      </form>
+
+      <div className={styles.dangerZone}>
+        <h3 className={styles.dangerTitle}>Danger Zone</h3>
+        <p
+          style={{
+            fontSize: "0.85rem",
+            color: "#64748b",
+            marginBottom: "1rem",
+          }}
+        >
+          Once you delete your account, there is no going back. Please be
+          certain.
+        </p>
+        <button
+          className={styles.btnDanger}
+          onClick={handleDelete}
+          disabled={deleting}
+        >
+          {deleting ? "Deleting..." : "Delete Account"}
+        </button>
       </div>
     </div>
   );

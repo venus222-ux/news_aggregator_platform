@@ -59,9 +59,13 @@ Route::middleware(['jwt.auth', 'throttle:60,1'])->group(function () {
     Route::get('/notifications/unread', [NotificationController::class, 'unreadCount']);
     Route::post('/notifications/mark-read', [NotificationController::class, 'markRead']);
 
-  Route::middleware(['admin'])->group(function () {
 
-    Route::get('/admin/dashboard', [AdminController::class, 'dashboard']);
+Route::prefix('admin')
+    ->middleware(['auth.jwt', 'role:admin'])
+    ->group(function () {
+        Route::get('/dashboard', [AdminController::class, 'dashboard']);
+        Route::get('/users', [AdminController::class, 'users']); // READ
+        Route::delete('/users/{id}', [AdminController::class, 'deleteUser']); // DELETE
 
     // categories
     Route::post('/categories', [CategoryController::class, 'store']);

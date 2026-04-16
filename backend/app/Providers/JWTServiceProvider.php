@@ -2,26 +2,44 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Auth;
-use Tymon\JWTAuth\JWTGuard;
+use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
-class JWTServiceProvider extends ServiceProvider
+// Events
+use App\Events\Auth\UserRegistered;
+use App\Events\Auth\UserLoggedIn;
+use App\Events\Auth\PasswordResetRequested;
+
+// Listeners
+use App\Listeners\SendWelcomeEmail;
+use App\Listeners\LogUserLogin;
+use App\Listeners\SendResetPasswordNotification;
+
+class EventServiceProvider extends ServiceProvider
 {
-    public function register(): void
-    {
-        //
-    }
+    /**
+     * The event listener mappings for the application.
+     *
+     * @var array<class-string, array<int, class-string>>
+     */
+    protected $listen = [
+        UserRegistered::class => [
+            SendWelcomeEmail::class,
+        ],
 
+        UserLoggedIn::class => [
+            LogUserLogin::class,
+        ],
+
+        PasswordResetRequested::class => [
+            SendResetPasswordNotification::class,
+        ],
+    ];
+
+    /**
+     * Register any events for your application.
+     */
     public function boot(): void
     {
-        Auth::extend('jwt', function ($app, $name, array $config) {
-            // Correct argument order: JWT, UserProvider, Request
-            return new JWTGuard(
-                $app['tymon.jwt'], // JWT service
-                Auth::createUserProvider($config['provider']),
-                $app['request']
-            );
-        });
+        parent::boot();
     }
 }

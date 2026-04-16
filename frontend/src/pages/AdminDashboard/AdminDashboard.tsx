@@ -1,18 +1,34 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import API from "../../api";
 
 import Sidebar from "../../components/AdminDashboard/Sidebar";
-import ActivityTable from "../../components/AdminDashboard/ActivityTable";
-
-import AdminCategories from "../../components/AdminCategories/AdminCategories";
-import AdminSources from "../../components/AdminSources/AdminSources";
-import AdminArticles from "../../components/AdminArticles/AdminArticles";
-import AdminAnalyticsByCategory from "../../components/AdminAnalytics/AdminAnalytics";
-
 import styles from "../../styles/AdminDashboard.module.css";
 
 type TabType = "home" | "logs" | "users";
+
+/* =========================
+   LAZY LOADED COMPONENTS
+========================= */
+const AdminCategories = lazy(
+  () => import("../../components/AdminCategories/AdminCategories"),
+);
+
+const AdminSources = lazy(
+  () => import("../../components/AdminSources/AdminSources"),
+);
+
+const AdminArticles = lazy(
+  () => import("../../components/AdminArticles/AdminArticles"),
+);
+
+const ActivityTable = lazy(
+  () => import("../../components/AdminDashboard/ActivityTable"),
+);
+
+const AdminAnalyticsByCategory = lazy(
+  () => import("../../components/AdminAnalytics/AdminAnalytics"),
+);
 
 export default function AdminDashboard() {
   const [currentTab, setCurrentTab] = useState<TabType>("home");
@@ -122,7 +138,9 @@ export default function AdminDashboard() {
                     <h4>Engagement Analytics</h4>
                   </div>
                   <div className={styles.cardBody}>
-                    <AdminAnalyticsByCategory />
+                    <Suspense fallback={<div>Loading chart...</div>}>
+                      <AdminAnalyticsByCategory />
+                    </Suspense>
                   </div>
                 </div>
 
@@ -131,7 +149,9 @@ export default function AdminDashboard() {
                     <h4>Latest Articles</h4>
                   </div>
                   <div className={styles.cardBody}>
-                    <AdminArticles />
+                    <Suspense fallback={<div>Loading articles...</div>}>
+                      <AdminArticles />
+                    </Suspense>
                   </div>
                 </div>
               </div>
@@ -142,7 +162,9 @@ export default function AdminDashboard() {
                     <h4>Sources</h4>
                   </div>
                   <div className={styles.cardBody}>
-                    <AdminSources />
+                    <Suspense fallback={<div>Loading sources...</div>}>
+                      <AdminSources />
+                    </Suspense>
                   </div>
                 </div>
 
@@ -151,7 +173,9 @@ export default function AdminDashboard() {
                     <h4>Categories</h4>
                   </div>
                   <div className={styles.cardBody}>
-                    <AdminCategories />
+                    <Suspense fallback={<div>Loading categories...</div>}>
+                      <AdminCategories />
+                    </Suspense>
                   </div>
                 </div>
               </div>
@@ -189,7 +213,9 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <ActivityTable activities={data.recent_activity} />
+                <Suspense fallback={<div>Loading table...</div>}>
+                  <ActivityTable activities={data.recent_activity} />
+                </Suspense>
               </>
             )}
           </>
@@ -223,7 +249,7 @@ export default function AdminDashboard() {
                 <tbody>
                   {users.map((user) => (
                     <tr key={user.id}>
-                      <td className={styles.emailCell}>{user.name || "N/A"}</td>
+                      <td>{user.name || "N/A"}</td>
                       <td>{user.email}</td>
                       <td>{user.roles?.[0]?.name || "user"}</td>
                       <td>{new Date(user.created_at).toLocaleDateString()}</td>

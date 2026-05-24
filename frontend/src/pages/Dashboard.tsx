@@ -1,15 +1,20 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom"; // Add Link for navigation
+import { Link } from "react-router-dom";
+import { useNotificationStore } from "../store/useNotificationStore"; // ← Add this
 import { useDashboardStore } from "../store/useDashboardStore";
 import styles from "./Dashboard.module.css";
 
 const Dashboard = () => {
-  const { categoryCount, unreadNotifications, recentArticles, fetchStats } =
-    useDashboardStore();
+  const { categoryCount, recentArticles, fetchStats } = useDashboardStore();
 
+  // Use the same notification store as Navbar
+  const { count: unreadNotifications, fetchUnread } = useNotificationStore();
+
+  // Fetch initial data
   useEffect(() => {
     fetchStats();
-  }, [fetchStats]);
+    fetchUnread(); // ← Make sure we have latest count
+  }, [fetchStats, fetchUnread]);
 
   return (
     <div className={styles.container}>
@@ -33,7 +38,7 @@ const Dashboard = () => {
           <small className="text-muted">Active Categories</small>
         </div>
 
-        {/* Card 2: Notifications */}
+        {/* Card 2: Notifications - NOW REAL-TIME */}
         <div className={styles.statCard}>
           <div className={styles.statHeader}>
             <span className={styles.statLabel}>Notifications</span>

@@ -1,14 +1,15 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useStore } from "../../store/useStore";
 import { useNotificationStore } from "../../store/useNotificationStore";
-import { useSubscriptionStore } from "../../store/useSubscriptionStore";
+import { useCategoryStore } from "../../store/useCategoryStore";
+
 import { useState, useEffect, useRef } from "react";
 import SearchDropdown from "../SearchDropdown";
 import styles from "./Navbar.module.css";
 import useCategoryNotifications from "../../hooks/useCategoryNotifications";
 
 export default function Navbar() {
-  // Destructure with fallbacks to prevent undefined errors
+  // Main app state
   const {
     isAuth = false,
     initialized = false,
@@ -17,13 +18,27 @@ export default function Navbar() {
     logout,
   } = useStore();
 
+  // Notification store
   const { count, reset, fetchUnread, notifications } = useNotificationStore();
-  const { fetchSubscriptions } = useSubscriptionStore();
 
-  // Safe hook call – the hook itself now checks for echo and subscriptions array
+  // Category / Subscription store
+  const { fetchSubscriptions } = useCategoryStore();
+
+  // Real-time notifications hook
   useCategoryNotifications();
 
-  // Only fetch notifications/subscriptions when authenticated and initialized
+  const navigate = useNavigate();
+  const location = useLocation();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const [expanded, setExpanded] = useState(false);
+  const [query, setQuery] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const closeMenu = () => setExpanded(false);
+  const isActive = (path: string) => location.pathname === path;
+
+  // Fetch data when user is authenticated
   useEffect(() => {
     if (!initialized || !isAuth) return;
 
@@ -31,7 +46,6 @@ export default function Navbar() {
       try {
         await fetchUnread();
       } catch (err: any) {
-        // Ignore aborted requests (common during fast navigation)
         if (err?.message !== "Request aborted") {
           console.error("fetchUnread failed", err);
         }
@@ -48,17 +62,6 @@ export default function Navbar() {
 
     fetchData();
   }, [initialized, isAuth, fetchUnread, fetchSubscriptions]);
-
-  const navigate = useNavigate();
-  const location = useLocation();
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const [expanded, setExpanded] = useState(false);
-  const [query, setQuery] = useState("");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-
-  const closeMenu = () => setExpanded(false);
-  const isActive = (path: string) => location.pathname === path;
 
   const handleLogout = () => {
     logout();
@@ -107,7 +110,7 @@ export default function Navbar() {
             <span>NewsHub</span>
           </Link>
 
-          {/* 🔍 Search (only if logged in) */}
+          {/* Search */}
           {isAuth && (
             <div className={styles.searchWrapper}>
               <form className={styles.searchBar} onSubmit={handleSearch}>
@@ -139,7 +142,7 @@ export default function Navbar() {
         {/* MENU */}
         <div className={`${styles.navCollapse} ${expanded ? styles.show : ""}`}>
           <div className={styles.navItems}>
-            {/* 🔐 AUTH MENU */}
+            {/* AUTH MENU */}
             {isAuth && (
               <>
                 <Link
@@ -186,7 +189,7 @@ export default function Navbar() {
 
             {/* RIGHT SIDE */}
             <div className="d-flex align-items-center ms-lg-3 gap-2">
-              {/* 🔔 Notifications */}
+              {/* Notifications */}
               {isAuth && (
                 <div className={styles.notificationWrapper} ref={dropdownRef}>
                   <div
@@ -231,7 +234,7 @@ export default function Navbar() {
                 </div>
               )}
 
-              {/* 🌙 Theme toggle */}
+              {/* Theme Toggle */}
               <button className={styles.themeBtn} onClick={toggleTheme}>
                 <i
                   className={`bi bi-${
@@ -240,7 +243,7 @@ export default function Navbar() {
                 ></i>
               </button>
 
-              {/* 🔑 Auth buttons */}
+              {/* Auth Buttons */}
               {!isAuth ? (
                 <>
                   <Link

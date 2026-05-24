@@ -6,9 +6,12 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
 
-// routes/channels.php
-
-// routes/channels.php
 Broadcast::channel('category.{id}', function ($user, $id) {
-    return $user !== null; // Or: return $user->subscriptions()->where('category_id', $id)->exists();
+    logger()->info('BROADCAST CHECK', [
+        'user_id' => $user?->id,
+        'category_id' => $id,
+    ]);
+
+    // Allow all authenticated users for now (you can restrict later)
+    return $user !== null;
 });

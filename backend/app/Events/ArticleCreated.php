@@ -2,11 +2,12 @@
 
 namespace App\Events;
 
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 
 class ArticleCreated implements ShouldBroadcast
 {
@@ -19,11 +20,17 @@ class ArticleCreated implements ShouldBroadcast
         $this->article = $article;
     }
 
-    public function broadcastOn(): PrivateChannel
+    public function broadcastOn(): array
     {
-        return new PrivateChannel(
-            'category.' . ($this->article['category_id'] ?? 'general')
-        );
+        $categoryId = $this->article['category_id'] ?? 'general';
+        return [
+            new PrivateChannel("category.{$categoryId}"),
+        ];
+    }
+
+    public function broadcastAs(): string
+    {
+        return 'article.created';   // Matches your frontend listener: ".article.created"
     }
 
     public function broadcastWith(): array
@@ -31,10 +38,5 @@ class ArticleCreated implements ShouldBroadcast
         return [
             'article' => $this->article
         ];
-    }
-
-    public function broadcastAs(): string
-    {
-        return 'article.created';
     }
 }

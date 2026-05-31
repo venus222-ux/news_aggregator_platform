@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Article;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 class NotificationController extends Controller
@@ -57,7 +56,7 @@ public function unreadCount()
 
     } catch (\Throwable $e) {
 
-        Log::error('Notification ERROR', [
+        \Log::error('Notification ERROR', [
             'message' => $e->getMessage(),
             'trace' => $e->getTraceAsString(),
         ]);

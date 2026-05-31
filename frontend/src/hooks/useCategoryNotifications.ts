@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import echo, { updateEchoToken } from "../lib/echo"; // ← Fixed import
+import echo, { setEchoToken } from "../lib/echo"; // ← Fixed import
 import { useStore } from "../store/useStore";
 import { useCategoryStore } from "../store/useCategoryStore"; // ← Better to use this one
 import { useNotificationStore } from "../store/useNotificationStore";
@@ -30,7 +30,7 @@ export default function useCategoryNotifications() {
     }
 
     // 🔥 Important: Update token before subscribing
-    updateEchoToken(token);
+    setEchoToken(token);
 
     if (initializedRef.current) return;
     initializedRef.current = true;

@@ -3,43 +3,45 @@ import Pusher from "pusher-js";
 
 (window as any).Pusher = Pusher;
 
+// We keep token in a simple variable (clean + predictable)
+let authToken: string | null = null;
+
 const echo = new Echo({
   broadcaster: "pusher",
-  key: "45879cb0d9cad8bd459c",
-  cluster: "eu",
+  key: import.meta.env.VITE_PUSHER_APP_KEY,
+  cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
   forceTLS: true,
+
   authEndpoint: "http://localhost:8000/broadcasting/auth",
 
   auth: {
     headers: {
       Accept: "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+      "X-Requested-With": "XMLHttpRequest",
+
+      // IMPORTANT: always read latest token
+      get Authorization() {
+        return authToken ? `Bearer ${authToken}` : "";
+      },
     },
   },
 });
 
-// Better connection logging
+// Connection logs
 echo.connector.pusher.connection.bind("connected", () => {
   console.log("✅ Pusher Connected");
 });
 
 echo.connector.pusher.connection.bind("error", (err: any) => {
-  console.error("❌ Pusher Connection Error:", err);
+  console.error("❌ Pusher Error:", err);
 });
 
-export const updateEchoToken = (token: string | null) => {
-  if (!echo.options.auth) return;
-
-  if (token) {
-    echo.options.auth.headers = {
-      ...echo.options.auth.headers,
-      Authorization: `Bearer ${token}`,
-    };
-
-    console.log("🔑 Echo token updated");
-  } else {
-    delete echo.options.auth.headers?.Authorization;
-  }
+//
+// ✅ SAFE TOKEN UPDATE (no mutation bugs)
+//
+export const setEchoToken = (token: string | null) => {
+  authToken = token;
+  console.log("🔑 Echo token updated");
 };
 
 export default echo;

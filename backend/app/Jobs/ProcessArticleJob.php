@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Events\ArticleCreated;
 use App\Models\Article;
 use App\Models\Category;
 use Illuminate\Bus\Queueable;
@@ -61,15 +62,17 @@ class ProcessArticleJob implements ShouldQueue
             ]);
 
             // 2. Prepare Payload (Force MongoDB ID to string and Category to int)
-            $payload = [
-                'id' => (string) $article->id,
-                'title' => (string) $article->title,
-                'category_id' => $article->category_id ? (int) $article->category_id : 'general',
+             $payload = [
+               'id' => (string) $article->id,
+               'title' => (string) $article->title,
+               'category_id' => (string) ($article->category_id ?? 'general'),
             ];
+
+           event(new ArticleCreated($payload));
 
             // 3. Fire Broadcast Event
             // Use broadcast() helper to ensure it respects the 'pusher' driver
-            broadcast(new ArticleCreated($payload));
+            event(new ArticleCreated($payload));
 
             Log::info("SUCCESS: Article stored and broadcast sent for: " . $payload['title']);
 

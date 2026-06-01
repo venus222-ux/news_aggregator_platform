@@ -61,7 +61,7 @@ Route::middleware(['jwt.auth', 'throttle:60,1'])->group(function () {
 
 
 Route::prefix('admin')
-    ->middleware(['auth.jwt', 'role:admin'])
+    ->middleware(['jwt.auth', 'role:admin'])
     ->group(function () {
         Route::get('/dashboard', [AdminController::class, 'dashboard']);
         Route::get('/users', [AdminController::class, 'users']); // READ
@@ -73,18 +73,18 @@ Route::prefix('admin')
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy']);
 
     // news fetch
-    Route::post('/admin/fetch-news', [NewsController::class, 'fetchNow']);
+    Route::post('f/etch-news', [NewsController::class, 'fetchNow']);
 
     // sources
-    Route::get('/admin/sources', [SourceController::class, 'index']);
-    Route::post('/admin/sources', [SourceController::class, 'store']);
-    Route::put('/admin/sources/{source}', [SourceController::class, 'update']);
-    Route::delete('/admin/sources/{source}', [SourceController::class, 'destroy']);
+    Route::get('/sources', [SourceController::class, 'index']);
+    Route::post('/sources', [SourceController::class, 'store']);
+    Route::put('/sources/{source}', [SourceController::class, 'update']);
+    Route::delete('/sources/{source}', [SourceController::class, 'destroy']);
 
-    Route::get('/admin/latest-articles', [ArticleController::class, 'latestAdmin']);
+    Route::get('/latest-articles', [ArticleController::class, 'latestAdmin']);
 
-    Route::get('/admin/analytics/article-stats', [AnalyticsController::class, 'articleStats']);
-    Route::get('admin/analytics/article-stats-by-category', [AnalyticsController::class, 'articleStatsByCategory']);
+    Route::get('/analytics/article-stats', [AnalyticsController::class, 'articleStats']);
+    Route::get('/analytics/article-stats-by-category', [AnalyticsController::class, 'articleStatsByCategory']);
 });
 
 

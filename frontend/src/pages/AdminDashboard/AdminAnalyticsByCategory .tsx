@@ -12,13 +12,10 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-interface CategoryStats {
-  date: string;
-  [categoryName: string]: number | string;
-}
+import type { CategoryStatsPoint } from "../../types";
 
 const AdminAnalyticsByCategory = () => {
-  const [stats, setStats] = useState<CategoryStats[]>([]);
+  const [stats, setStats] = useState<CategoryStatsPoint[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {

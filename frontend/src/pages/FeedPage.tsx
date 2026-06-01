@@ -9,12 +9,7 @@ const VirtualizedArticleList = lazy(
   () => import("../components/VirtualizedArticleList"),
 );
 
-import type { Article } from "../store/useFeedStore";
-
-interface Cursor {
-  date: string;
-  id: string;
-}
+import type { Article, Cursor } from "../types";
 
 const FeedPage = () => {
   const { subscriptions } = useCategoryStore();

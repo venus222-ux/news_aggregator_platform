@@ -2,21 +2,7 @@
 import { create } from "zustand";
 import API from "../api";
 
-export interface RecentArticle {
-  id: number;
-  title: string;
-  url: string;
-  category: string;
-  published_at: string;
-  source?: string;
-}
-
-interface DashboardState {
-  categoryCount: number;
-  unreadNotifications: number;
-  recentArticles: RecentArticle[];
-  fetchStats: () => Promise<void>;
-}
+import type { DashboardState } from "../types";
 
 export const useDashboardStore = create<DashboardState>((set) => ({
   categoryCount: 0,

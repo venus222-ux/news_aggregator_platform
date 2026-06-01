@@ -14,7 +14,7 @@ import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 
 import API from "../api";
 import styles from "./Home.module.css";
-import type { Article, Cursor, HomeArticle } from "../store/useFeedStore";
+import type { Article, Cursor, HomeArticle, FeedQueryData } from "../types";
 
 const ArticleCard = lazy(() => import("../components/ArticleCard"));
 const VirtualizedArticleList = lazy(
@@ -24,7 +24,7 @@ const VirtualizedArticleList = lazy(
 const Home = () => {
   const { isAuth } = useStore();
   const { subscriptions, subscribe } = useCategoryStore();
-  const { notifications, setNotifications } = useNotificationStore();
+  const { notifications } = useNotificationStore();
   const queryClient = useQueryClient();
 
   const sortedSubscriptions = useMemo(
@@ -74,11 +74,11 @@ const Home = () => {
   useEffect(() => {
     if (notifications.length === 0) return;
 
-    // merge notifications into feed without refetch
-    queryClient.setQueryData(["feed"], (oldData: any) => {
+    queryClient.setQueryData(["feed"], (oldData: FeedQueryData | undefined) => {
       if (!oldData) return oldData;
 
-      const allArticles = oldData.pages.flatMap((p: any) => p.data);
+      const allArticles = oldData.pages.flatMap((p) => p.data);
+
       const newArticles = notifications
         .map((n) => ({
           _id: n.id,
@@ -87,7 +87,7 @@ const Home = () => {
           published_at: n.published_at || new Date().toISOString(),
           url: n.url,
         }))
-        .filter((a) => !allArticles.some((x: any) => x._id === a._id));
+        .filter((a) => !allArticles.some((x) => x._id === a._id));
 
       if (newArticles.length === 0) return oldData;
 
@@ -102,10 +102,7 @@ const Home = () => {
         ],
       };
     });
-
-    // clear notifications after merge
-    setNotifications([]);
-  }, [notifications, queryClient, setNotifications]);
+  }, [notifications, queryClient]);
 
   // --- Discover Articles ---
   const [discoverArticles, setDiscoverArticles] = useState<HomeArticle[]>([]);

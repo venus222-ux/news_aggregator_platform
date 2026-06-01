@@ -2,14 +2,14 @@
 import React, { useRef, useEffect, useCallback, memo, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import ArticleCard from "./ArticleCard";
-import type { Article } from "../store/useFeedStore";
+import type { Article } from "../types";
 
 interface Props {
   articles: Article[];
   fetchNextPage?: () => void;
   renderItem?: (article: Article) => React.ReactNode;
-  columnWidth?: number; // optional column width
-  gap?: number; // spacing between items
+  columnWidth?: number;
+  gap?: number;
 }
 
 const VirtualizedArticleList: React.FC<Props> = ({
@@ -22,21 +22,23 @@ const VirtualizedArticleList: React.FC<Props> = ({
   const parentRef = useRef<HTMLDivElement>(null);
   const [columns, setColumns] = useState(1);
 
-  // Calculate number of columns based on container width
+  // Calculate columns based on container width
   const calculateColumns = useCallback(() => {
     if (!parentRef.current) return;
+
     const width = parentRef.current.offsetWidth;
     const cols = Math.floor(width / (columnWidth + gap)) || 1;
+
     setColumns(cols);
   }, [columnWidth, gap]);
 
   useEffect(() => {
     calculateColumns();
     window.addEventListener("resize", calculateColumns);
+
     return () => window.removeEventListener("resize", calculateColumns);
   }, [calculateColumns]);
 
-  // Compute row count for virtualizer
   const rowCount = Math.ceil(articles.length / columns);
 
   const rowVirtualizer = useVirtualizer({
@@ -53,16 +55,22 @@ const VirtualizedArticleList: React.FC<Props> = ({
     ),
   });
 
+  // ✅ FIXED EFFECT (no unstable dependency anymore)
   useEffect(() => {
     if (!fetchNextPage) return;
+
     const virtualItems = rowVirtualizer.getVirtualItems();
+    if (!virtualItems.length) return;
+
     const lastRow = virtualItems[virtualItems.length - 1];
+
     if (lastRow && lastRow.index >= rowCount - 2) {
       fetchNextPage();
     }
-  }, [rowVirtualizer.getVirtualItems(), rowCount, fetchNextPage]);
+  }, [rowVirtualizer, rowCount, fetchNextPage]);
 
   const defaultRender = (article: Article) => <ArticleCard article={article} />;
+
   const itemRenderer = renderItem || defaultRender;
 
   return (
@@ -84,6 +92,7 @@ const VirtualizedArticleList: React.FC<Props> = ({
         {rowVirtualizer.getVirtualItems().map((virtualRow) => {
           const startIndex = virtualRow.index * columns;
           const rowArticles = articles.slice(startIndex, startIndex + columns);
+
           if (!rowArticles.length) return null;
 
           return (

@@ -6,26 +6,7 @@ import {
   unsubscribeCategory,
 } from "../api";
 
-export interface Category {
-  id: number;
-  name: string;
-  slug: string;
-}
-
-interface CategoryStore {
-  categories: Category[];
-  subscriptions: number[];
-  loading: boolean;
-
-  fetchAll: () => Promise<void>;
-  fetchSubscriptions: () => Promise<void>;
-  subscribe: (id: number) => Promise<void>;
-  unsubscribe: (id: number) => Promise<void>;
-
-  addCategory: (category: Category) => void;
-  updateCategory: (id: number, name: string, slug: string) => void;
-  removeCategory: (id: number) => void;
-}
+import type { CategoryStore, Category } from "../types";
 
 export const useCategoryStore = create<CategoryStore>((set, get) => ({
   categories: [],

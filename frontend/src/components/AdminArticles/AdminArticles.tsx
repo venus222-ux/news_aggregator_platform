@@ -1,17 +1,12 @@
 import { useEffect, useState } from "react";
-import { fetchNewsNow } from "../../api";
 import styles from "./AdminArticles.module.css";
 
-interface Article {
-  title: string;
-  url: string;
-  source: string;
-  published_at: string;
-  category?: string | null;
-}
+import { fetchNewsNow } from "../../api";
+
+import { AdminArticle } from "../../types/index";
 
 const AdminArticles = () => {
-  const [articles, setArticles] = useState<Article[]>([]);
+  const [articles, setArticles] = useState<AdminArticle[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Load articles from backend

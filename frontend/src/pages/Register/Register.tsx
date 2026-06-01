@@ -5,15 +5,10 @@ import { toast } from "react-toastify";
 import { useStore } from "../../store/useStore";
 import styles from "./Register.module.css";
 
-interface FormData {
-  name: string;
-  email: string;
-  password: string;
-  password_confirmation: string;
-}
+import type { RegisterRequest } from "../../types";
 
 const Register = () => {
-  const [form, setForm] = useState<FormData>({
+  const [form, setForm] = useState<RegisterRequest>({
     name: "",
     email: "",
     password: "",

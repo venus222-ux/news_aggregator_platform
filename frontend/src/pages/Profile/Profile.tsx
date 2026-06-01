@@ -4,20 +4,11 @@ import { toast } from "react-toastify";
 import { useStore } from "../../store/useStore";
 import styles from "./Profile.module.css";
 
-interface ProfileData {
-  email: string;
-  created_at?: string;
-}
-
-interface FormData {
-  email: string;
-  password: string;
-  password_confirmation: string;
-}
+import type { ProfileData, ProfileUpdateRequest } from "../../types";
 
 const Profile = () => {
   const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<ProfileUpdateRequest>({
     email: "",
     password: "",
     password_confirmation: "",

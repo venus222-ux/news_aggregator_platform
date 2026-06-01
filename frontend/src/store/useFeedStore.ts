@@ -1,34 +1,7 @@
 import { create } from "zustand";
 import API from "../api";
 
-export interface Article {
-  _id?: string;
-  id?: string | number;
-  title: string;
-  description?: string;
-  source: string;
-  published_at: string;
-  category_id?: string;
-  url: string;
-}
-
-export interface Cursor {
-  date: string;
-  id: string;
-}
-
-export type HomeArticle = Article & {
-  category?: string | { name: string };
-  category_id?: string | number;
-};
-
-export interface FeedStore {
-  articles: Article[];
-  nextCursor: Cursor | null;
-  loading: boolean;
-  fetchFeed: (cursor?: Cursor) => Promise<void>;
-  resetFeed: () => void;
-}
+import type { FeedStore, Article, Cursor } from "../types";
 
 export const useFeedStore = create<FeedStore>((set, get) => ({
   articles: [],

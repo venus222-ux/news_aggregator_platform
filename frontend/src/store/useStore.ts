@@ -1,22 +1,6 @@
 import { create } from "zustand";
 import API from "../api";
-
-interface AppState {
-  isAuth: boolean;
-  token: string | null;
-  role: string | null;
-  theme: "light" | "dark";
-  initialized: boolean;
-
-  setAuth: (token: string | null, role: string | null) => void;
-  logout: () => void;
-  setToken: (token: string | null) => void;
-  toggleTheme: () => void;
-  setInitialized: (value: boolean) => void;
-
-  startTokenRefreshLoop: () => void;
-  stopTokenRefreshLoop: () => void;
-}
+import type { AppState } from "../types/index";
 
 export const useStore = create<AppState>((set, get) => {
   let intervalId: ReturnType<typeof setInterval> | null = null;
@@ -30,7 +14,7 @@ export const useStore = create<AppState>((set, get) => {
 
     setAuth: (token, role) =>
       set({
-        isAuth: !!token, // true only if token is truthy
+        isAuth: !!token,
         token: token ?? null,
         role: role ?? null,
       }),
@@ -76,7 +60,7 @@ export const useStore = create<AppState>((set, get) => {
     startTokenRefreshLoop: () => {
       if (intervalId) return;
 
-      const refreshInterval = 1000 * 60 * 10; // 10 min
+      const refreshInterval = 1000 * 60 * 10;
 
       intervalId = setInterval(async () => {
         try {

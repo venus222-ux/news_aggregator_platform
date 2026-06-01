@@ -1,10 +1,7 @@
 import { create } from "zustand";
 import API from "../api";
 
-interface AnalyticsState {
-  stats: { date: string; views: number; clicks: number }[];
-  fetchStats: () => Promise<void>;
-}
+import type { AnalyticsState } from "../types";
 
 export const useAnalyticsStore = create<AnalyticsState>((set) => ({
   stats: [],

@@ -5,7 +5,8 @@ import API from "../../api";
 import Sidebar from "../../components/AdminDashboard/Sidebar";
 import styles from "../../styles/AdminDashboard.module.css";
 
-type TabType = "home" | "logs" | "users";
+import type { DashboardData, AdminUser, TabType } from "../../types";
+import { AxiosError } from "axios";
 
 /* =========================
    LAZY LOADED COMPONENTS
@@ -33,8 +34,8 @@ const AdminAnalyticsByCategory = lazy(
 export default function AdminDashboard() {
   const [currentTab, setCurrentTab] = useState<TabType>("home");
 
-  const [data, setData] = useState<any>(null);
-  const [users, setUsers] = useState<any[]>([]);
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   /* ========================= */
@@ -72,11 +73,12 @@ export default function AdminDashboard() {
     try {
       await API.delete(`/admin/users/${id}`);
       setUsers((prev) => prev.filter((u) => u.id !== id));
-    } catch (err: any) {
-      alert(err.response?.data?.message || "Delete failed");
+    } catch (err) {
+      const error = err as AxiosError<{ message: string }>;
+
+      alert(error.response?.data?.message || "Delete failed");
     }
   };
-
   if (error) return <div className={styles.errorState}>⚠️ {error}</div>;
 
   return (

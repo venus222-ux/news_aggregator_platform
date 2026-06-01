@@ -1,15 +1,7 @@
 import React from "react";
 import styles from "./ArticleCard.module.css";
 
-interface Article {
-  _id?: string;
-  title: string;
-  description?: string;
-  source: string;
-  published_at: string;
-  url: string;
-  category?: string;
-}
+import type { Article } from "../types";
 
 interface Props {
   article: Article;

@@ -54,7 +54,7 @@ type RetryableRequestConfig = InternalAxiosRequestConfig & {
 
 // --- Instance Setup ---
 const API: AxiosInstance = axios.create({
-  baseURL: "/api",
+  baseURL: "http://localhost:8000/api",
   withCredentials: true, // 👈 Required for HttpOnly Cookies
 });
 

@@ -170,6 +170,8 @@ export const createSource = (data: any) => API.post("/admin/sources", data);
 export const deleteSource = (id: number) => API.delete(`/admin/sources/${id}`);
 export const fetchNewsNow = () => API.post("/admin/fetch-news");
 
+export const fetchAdminArticles = () => API.get("/admin/latest-articles");
+
 // Articles
 export const searchArticles = (q: string) => API.get(`/articles/search?q=${q}`);
 

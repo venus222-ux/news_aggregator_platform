@@ -29,7 +29,6 @@ class AICategoryService
         foreach ($chunks as $chunk) {
 
             // --- STRICT RATE LIMITING LOGIC ---
-            // Ensure at least 21 seconds have passed since the LAST successful request
             $lastRequest = Cache::get('openai_last_request_at', 0);
             $secondsSinceLast = microtime(true) - $lastRequest;
 
@@ -66,12 +65,22 @@ class AICategoryService
                 $finalResults = $finalResults + (array)$chunkResults;
 
             } catch (\Exception $e) {
-                if (str_contains($e->getMessage(), '429') || str_contains($e->getMessage(), 'rate limit')) {
+                $rawMessage = $e->getMessage();
+
+                // 🔥 CRITICAL: Log the actual unmasked error message to daily logs
+                Log::error("OpenAI API RAW ERROR: " . $rawMessage);
+
+                if (str_contains($rawMessage, 'quota') || str_contains($rawMessage, 'billing')) {
+                    throw new \Exception("CREDITS_EXPIRED: Check your OpenAI Billing Dashboard.");
+                }
+
+                if (str_contains($rawMessage, '429') || str_contains($rawMessage, 'rate limit')) {
                     // Mark that we hit the limit so other workers know to stop
                     Cache::put('openai_last_request_at', microtime(true) + 60, 120);
                     throw new \Exception("RATE_LIMIT");
                 }
-                Log::error("AI Chunk Error: " . $e->getMessage());
+
+                Log::error("AI Chunk Error: " . $rawMessage);
             }
         }
 

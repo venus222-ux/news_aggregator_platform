@@ -252,8 +252,12 @@ export default function AdminDashboard() {
                   {users.map((user) => (
                     <tr key={user.id}>
                       <td>{user.name || "N/A"}</td>
-                      <td>{user.email}</td>
-                      <td>{user.roles?.[0]?.name || "user"}</td>
+                      <td className={styles.emailCell}>{user.email}</td>
+                      <td>
+                        <span className={styles.roleBadge}>
+                          {user.roles?.[0]?.name || "user"}
+                        </span>
+                      </td>
                       <td>{new Date(user.created_at).toLocaleDateString()}</td>
                       <td>
                         <button

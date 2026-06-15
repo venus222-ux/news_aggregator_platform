@@ -1,28 +1,24 @@
 import { useEffect, useState } from "react";
 import styles from "./AdminArticles.module.css";
 
-import { fetchNewsNow } from "../../api";
-
+// 🔑 Import both tools cleanly from your API module
+import { fetchNewsNow, fetchAdminArticles } from "../../api";
 import { AdminArticle } from "../../types/index";
 
 const AdminArticles = () => {
   const [articles, setArticles] = useState<AdminArticle[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Load articles from backend
+  // ⚡ Rewritten with Axios wrapper to eliminate manual authorization parsing errors
   const loadArticles = async () => {
     try {
-      const res = await fetch("/api/admin/latest-articles", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      const data = await res.json();
-      setArticles(data);
+      const res = await fetchAdminArticles();
+      setArticles(res.data);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to load admin articles via Axios instance:", err);
     }
   };
 
-  // Fetch news and poll for new articles
   const handleFetchNews = async () => {
     setLoading(true);
     try {

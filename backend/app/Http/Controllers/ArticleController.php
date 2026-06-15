@@ -30,10 +30,11 @@ class ArticleController extends Controller
         /**
      * Admin endpoint: latest 10 articles with category name
      */
-  public function latestAdmin()
+public function latestAdmin()
 {
+    // 🧠 Filter inside the database builder query *before* executing ->get()
     $articles = Article::latest()
-        ->take(10)
+        ->take(5) // Gets exactly 5 rows straight from the database
         ->get()
         ->map(function ($article) {
             $categoryName = null;
@@ -44,11 +45,11 @@ class ArticleController extends Controller
             }
 
             return [
-                'title' => $article->title,
-                'url' => $article->url,
-                'source' => $article->source,
+                'title'        => $article->title,
+                'url'          => $article->url,
+                'source'       => $article->source,
                 'published_at' => $article->published_at,
-                'category' => $categoryName ?? 'Uncategorized',
+                'category'     => $categoryName ?? 'Uncategorized',
             ];
         });
 

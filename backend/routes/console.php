@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schedule;
 // Use Class Name string instead of "new Job()"
 //Test
 Schedule::job(FetchNewsJob::class)
-    ->everyMinute();
+    ->everyFiveMinutes()->withoutOverlapping();
 
 
 //Production

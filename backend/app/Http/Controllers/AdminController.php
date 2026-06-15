@@ -57,4 +57,15 @@ public function deleteUser($id)
     $user->delete();
     return response()->json(['message' => 'User deleted successfully']);
 }
+
+// Add this method inside your AdminController class
+public function latestArticles()
+{
+    // Adjust model name and count as needed for your application
+    $articles = \App\Models\Article::latest()
+        ->limit(10)
+        ->get();
+
+    return response()->json($articles);
+}
 }

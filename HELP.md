@@ -14,6 +14,11 @@ php artisan serve
 php artisan jwt:secret
 php artisan config:clear
 php artisan config:cache
+php artisan cache:clear
+
+php artisan schedule:work
+
+GET THE KEY FROM: https://platform.openai.com/api-keys
 
 ✅ 3. Set Up React Frontend
 cd ../frontend

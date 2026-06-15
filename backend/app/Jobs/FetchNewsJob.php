@@ -43,79 +43,99 @@ class FetchNewsJob implements ShouldQueue
     {
         $articles = [];
 
-        try {
-            if ($source->type === 'rss') {
-                $response = Http::withHeaders([
-                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) NewsAggregator/1.0',
-                    'Accept' => 'application/xml,text/xml,*/*'
-                ])->timeout(20)->get($source->url);
+     try {
+    if ($source->type === 'rss') {
+        $response = Http::withHeaders([
+            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) NewsAggregator/1.0',
+            'Accept' => 'application/xml,text/xml,*/*'
+        ])->timeout(20)->get($source->url);
 
-                if (!$response->successful()) {
-                    Log::error("HTTP Error for {$source->name}: " . $response->status());
-                    return [];
-                }
+        if (!$response->successful()) {
+            Log::error("HTTP Error for {$source->name}: " . $response->status());
+            return [];
+        }
 
-                $rss = new \SimpleXMLElement($response->body());
+        $rss = new \SimpleXMLElement($response->body());
+        $items = $rss->channel->item ?? [];
 
-                $items = $rss->channel->item ?? [];
+        foreach ($items as $item) {
+            $url = (string) $item->link;
 
-                 foreach ($items as $item) {
+            // Early Deduplication: Skip if we already processed this URL
+            if (empty($url) || \App\Models\Article::where('url', $url)->exists()) {
+                continue;
+            }
+
+            $articles[] = [
+                'title' => (string) $item->title,
+                'description' => (string) $item->description,
+                'content' => (string) ($item->children('content', true)->encoded ?? $item->description),
+                'url' => $url,
+                'published_at' => (string) $item->pubDate,
+                'category' => array_map('strval', iterator_to_array($item->category ?? [])),
+                'source' => $source->name,
+                'raw' => json_decode(json_encode($item), true),
+            ];
+        }
+    } elseif ($source->type === 'api') {
+        $params = $source->api_key ? ['apiKey' => $source->api_key] : [];
+        $response = Http::timeout(30)->get($source->url, $params);
+
+        if ($response->ok()) {
+            $json = $response->json();
+
+            // NewsAPI logic
+            if (isset($json['articles'])) {
+                $articlesApi = $json['articles'] ?? [];
+                foreach ($articlesApi as $item) {
+                    $url = $item['url'] ?? null;
+
+                    // Early Deduplication
+                    if (empty($url) || \App\Models\Article::where('url', $url)->exists()) {
+                        continue;
+                    }
+
                     $articles[] = [
-                        'title' => (string) $item->title,
-                        'description' => (string) $item->description,
-                        'content' => (string) ($item->children('content', true)->encoded ?? $item->description),
-                        'url' => (string) $item->link,
-                        'published_at' => (string) $item->pubDate,
-                        'category' => array_map('strval', iterator_to_array($item->category ?? [])),
-                        'source' => $source->name,
-                        'raw' => json_decode(json_encode($item), true),
+                        'title' => $item['title'] ?? null,
+                        'description' => $item['description'] ?? null,
+                        'content' => $item['content'] ?? null,
+                        'url' => $url,
+                        'published_at' => $item['publishedAt'] ?? null,
+                        'category' => [$item['category'] ?? 'General'],
+                        'source' => $item['source']['name'] ?? $source->name,
+                        'raw' => $item,
                     ];
                 }
-            } elseif ($source->type === 'api') {
-                $params = $source->api_key ? ['apiKey' => $source->api_key] : [];
-                $response = Http::timeout(30)->get($source->url, $params);
+            }
 
-                if ($response->ok()) {
-                    $json = $response->json();
+            // Reddit logic
+            if (isset($json['data']['children'])) {
+                foreach ($json['data']['children'] as $child) {
+                    $data = $child['data'];
+                    $url = 'https://reddit.com' . ($data['permalink'] ?? '');
 
-                    // NewsAPI logic
-                    if (isset($json['articles'])) {
-                       $articlesApi = $json['articles'] ?? [];
-                       foreach ($articlesApi as $item) {
-                            $articles[] = [
-                                'title' => $item['title'] ?? null,
-                                'description' => $item['description'] ?? null,
-                                'content' => $item['content'] ?? null,
-                                'url' => $item['url'] ?? null,
-                                'published_at' => $item['publishedAt'] ?? null,
-                                'category' => [$item['category'] ?? 'General'],
-                                'source' => $item['source']['name'] ?? $source->name,
-                                'raw' => $item,
-                            ];
-                        }
+                    // Early Deduplication
+                    if (empty($url) || \App\Models\Article::where('url', $url)->exists()) {
+                        continue;
                     }
 
-                    // Reddit logic
-                    if (isset($json['data']['children'])) {
-                        foreach ($json['data']['children'] as $child) {
-                            $data = $child['data'];
-                            $articles[] = [
-                                'title' => $data['title'] ?? null,
-                                'description' => $data['selftext'] ?? null,
-                                'content' => $data['selftext'] ?? null,
-                                'url' => 'https://reddit.com' . ($data['permalink'] ?? ''),
-                                'published_at' => date('r', $data['created_utc'] ?? time()),
-                                'category' => [$data['subreddit'] ?? 'Reddit'],
-                                'source' => $source->name,
-                                'raw' => $data,
-                            ];
-                        }
-                    }
+                    $articles[] = [
+                        'title' => $data['title'] ?? null,
+                        'description' => $data['selftext'] ?? null,
+                        'content' => $data['selftext'] ?? null,
+                        'url' => $url,
+                        'published_at' => date('r', $data['created_utc'] ?? time()),
+                        'category' => [$data['subreddit'] ?? 'Reddit'],
+                        'source' => $source->name,
+                        'raw' => $data,
+                    ];
                 }
             }
-        } catch (\Exception $e) {
-            Log::error("Fetch failed for source {$source->name}: {$e->getMessage()}");
         }
+    }
+} catch (\Exception $e) {
+    Log::error("Fetch failed for source {$source->name}: {$e->getMessage()}");
+}
 
         return $articles;
     }

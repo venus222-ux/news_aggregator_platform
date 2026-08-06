@@ -45,7 +45,8 @@ services:
       - DB_MONGO_DATABASE=news_aggregator
       - MONGODB_URI=mongodb://host.docker.internal:27017/news_aggregator
       - DB_HOST=host.docker.internal
-      - OPENAI_API_KEY=
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+
 
 volumes:
   redis_data:

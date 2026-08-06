@@ -1,31 +1,29 @@
-news_aggregator_platform\
-├── backend/ # Laravel 12 API
-└── frontend/ # React + Vite + TS SPA
+**AI News Aggregator & Intelligence Platform**
 
-✅ 2. Set Up Laravel Backend
-cd backend
-cp .env.example .env
-composer install
-php artisan key:generate
-php artisan migrate
-php artisan db:seed
-php artisan serve
+High-performance automated news platform that ingests global news from multiple sources, uses AI for intelligent classification and sentiment analysis, and delivers personalized, real-time news experience at scale.
 
-php artisan jwt:secret
-php artisan config:clear
-php artisan config:cache
-php artisan cache:clear
+### AI News Aggregator & Intelligence Platform
 
-php artisan schedule:work
+**Description**  
+A high-performance automated news platform that ingests global news from multiple sources, uses AI for intelligent classification and sentiment analysis, and delivers personalized, real-time news experience at scale.
 
-GET THE KEY FROM: https://platform.openai.com/api-keys
+**Process Flow**
 
-✅ 3. Set Up React Frontend
-cd ../frontend
-cp .env.example .env
-npm install
-npm run dev
+1. **Ingestion**  
+   Fetches latest articles every 5 minutes from RSS feeds and APIs.
 
-✅ 4. Run in the root project:
-npm run dev
-docker-compose up -d
+2. **Processing**  
+   Cleans content, removes duplicates, and validates articles.
+
+3. **Classification**  
+   Automatically tags articles and analyzes sentiment using AI.
+
+4. **Storage**  
+   Saves relational data in MySQL and full article content in MongoDB.
+
+5. **Broadcasting**  
+   Triggers real-time notification to users via Pusher when new relevant articles arrive.
+
+6. **Delivery**  
+   Users receive instant updates in their personalized feed without refreshing.
+

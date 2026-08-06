@@ -1,28 +1,51 @@
-**AI News Aggregator & Intelligence Platform**
+Laravel_react_boilerplate\
+├── backend/ # Laravel 12 API
+└── frontend/ # React + Vite + TS SPA
 
-High-performance automated news platform that ingests global news from multiple sources, uses AI for intelligent classification and sentiment analysis, and delivers personalized, real-time news experience at scale.
+## Comenzi utile de dezvoltare
 
-### AI News Aggregator & Intelligence Platform
+✅ 1. Set Up Laravel Backend
+cd backend
+cp .env.example .env
+composer install
+php artisan key:generate
+php artisan migrate
+php artisan db:seed
+php artisan serve
 
-**Description**  
-A high-performance automated news platform that ingests global news from multiple sources, uses AI for intelligent classification and sentiment analysis, and delivers personalized, real-time news experience at scale.
+php artisan jwt:secret
+php artisan config:clear
+php artisan config:cache
 
-**Process Flow**
+✅ 2. Set Up React Frontend
+cd ../frontend
+cp .env.example .env
+npm install
+npm run dev
 
-1. **Ingestion**  
-   Fetches latest articles every 5 minutes from RSS feeds and APIs.
+✅ 3. Run in the root project:
+npm run dev
+docker-compose up -d
 
-2. **Processing**  
-   Cleans content, removes duplicates, and validates articles.
+## Stack tehnic
 
-3. **Classification**  
-   Automatically tags articles and analyzes sentiment using AI.
+**Backend**
 
-4. **Storage**  
-   Saves relational data in MySQL and full article content in MongoDB.
+- Laravel (PHP) + MySQL
+- Redis (queue, cache) + Laravel Horizon (monitorizare cozi)
+- MongoDB (loguri de upload)
 
-5. **Broadcasting**  
-   Triggers real-time notification to users via Pusher when new relevant articles arrive.
+**Frontend**
 
-6. **Delivery**  
-   Users receive instant updates in their personalized feed without refreshing.
+- React + TypeScript
+- Zustand (state management)
+- React Query (data fetching pentru unele hook-uri)
+- Bootstrap + CSS Modules
+
+
+```env
+QUEUE_CONNECTION=redis
+MAIL_MAILER=smtp
+MAIL_ADMIN_ADDRESS=admin@yourcompany.com
+FRONTEND_URL=http://localhost:5173
+ELASTICSEARCH_HOST=http://127.0.0.1:9200

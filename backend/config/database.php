@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Str;
+use Pdo\Mysql;
 
 return [
 
@@ -59,7 +60,7 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                (PHP_VERSION_ID >= 80500 ? \Pdo\Mysql::ATTR_SSL_CA : \PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
+                (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
 
@@ -79,7 +80,7 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                (PHP_VERSION_ID >= 80500 ? \Pdo\Mysql::ATTR_SSL_CA : \PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
+                (PHP_VERSION_ID >= 80500 ? Mysql::ATTR_SSL_CA : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
 
@@ -115,15 +116,15 @@ return [
 
         // 🟢 MongoDB connection
         'mongodb' => [
-            'driver'   => 'mongodb',
-            'host'     => env('DB_MONGO_HOST', '127.0.0.1'),
-            'port'     => env('DB_MONGO_PORT', 27017),
+            'driver' => 'mongodb',
+            'host' => env('DB_MONGO_HOST', '127.0.0.1'),
+            'port' => env('DB_MONGO_PORT', 27017),
             'database' => env('DB_MONGO_DATABASE', 'news_aggregator'),
             'username' => env('DB_MONGO_USERNAME', ''),
             'password' => env('DB_MONGO_PASSWORD', ''),
-            'options'  => [
-                'database' => env('DB_MONGO_AUTH_DB', 'admin') // authentication database
-            ]
+            'options' => [
+                'database' => env('DB_MONGO_AUTH_DB', 'admin'), // authentication database
+            ],
         ],
 
     ],

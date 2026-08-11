@@ -2,17 +2,15 @@
 
 namespace App\Providers;
 
-use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-
-// Events
-use App\Events\Auth\UserRegistered;
-use App\Events\Auth\UserLoggedIn;
 use App\Events\Auth\PasswordResetRequested;
-
-// Listeners
-use App\Listeners\SendWelcomeEmail;
+// Events
+use App\Events\Auth\UserLoggedIn;
+use App\Events\Auth\UserRegistered;
 use App\Listeners\LogUserLogin;
+// Listeners
 use App\Listeners\SendResetPasswordNotification;
+use App\Listeners\SendWelcomeEmail;
+use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
 {

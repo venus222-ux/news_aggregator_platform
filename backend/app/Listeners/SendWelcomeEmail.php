@@ -20,7 +20,7 @@ class SendWelcomeEmail implements ShouldQueue
 
         Mail::raw('Welcome to our platform!', function ($message) use ($event) {
             $message->to($event->user->email)
-                    ->subject('Welcome!');
+                ->subject('Welcome!');
         });
 
         // OR better (recommended):

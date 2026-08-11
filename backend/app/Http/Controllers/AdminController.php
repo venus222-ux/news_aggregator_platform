@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Article;
 use App\Models\MongoLog;
 use App\Models\User;
 
@@ -36,36 +37,37 @@ class AdminController extends Controller
         ]);
     }
 
-
-    //Read and Delete Users
+    // Read and Delete Users
     public function users()
-{
-    // Return users with their roles (using Spatie)
-    $users = User::with('roles')->get();
-    return response()->json($users);
-}
+    {
+        // Return users with their roles (using Spatie)
+        $users = User::with('roles')->get();
 
-public function deleteUser($id)
-{
-    $user = User::findOrFail($id);
-
-    // Prevent admin from deleting themselves
-    if ($user->id === auth()->id()) {
-        return response()->json(['message' => 'Cannot delete your own account'], 403);
+        return response()->json($users);
     }
 
-    $user->delete();
-    return response()->json(['message' => 'User deleted successfully']);
-}
+    public function deleteUser($id)
+    {
+        $user = User::findOrFail($id);
 
-// Add this method inside your AdminController class
-public function latestArticles()
-{
-    // Adjust model name and count as needed for your application
-    $articles = \App\Models\Article::latest()
-        ->limit(10)
-        ->get();
+        // Prevent admin from deleting themselves
+        if ($user->id === auth()->id()) {
+            return response()->json(['message' => 'Cannot delete your own account'], 403);
+        }
 
-    return response()->json($articles);
-}
+        $user->delete();
+
+        return response()->json(['message' => 'User deleted successfully']);
+    }
+
+    // Add this method inside your AdminController class
+    public function latestArticles()
+    {
+        // Adjust model name and count as needed for your application
+        $articles = Article::latest()
+            ->limit(10)
+            ->get();
+
+        return response()->json($articles);
+    }
 }

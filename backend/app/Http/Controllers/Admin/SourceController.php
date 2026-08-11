@@ -19,7 +19,7 @@ class SourceController extends Controller
             'name' => 'required|string|max:255',
             'type' => 'required|in:rss,api',
             'url' => 'required|url',
-            'api_key' => 'nullable|string'
+            'api_key' => 'nullable|string',
         ]);
 
         $source = Source::create($validated);
@@ -33,7 +33,7 @@ class SourceController extends Controller
             'name' => 'required|string|max:255',
             'type' => 'required|in:rss,api',
             'url' => 'required|url',
-            'api_key' => 'nullable|string'
+            'api_key' => 'nullable|string',
         ]);
 
         $source->update($validated);
@@ -46,7 +46,7 @@ class SourceController extends Controller
         $source->delete();
 
         return response()->json([
-            'message' => 'Source deleted'
+            'message' => 'Source deleted',
         ]);
     }
 }

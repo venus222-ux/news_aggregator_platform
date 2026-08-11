@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Events\ArticleCreated;
 use App\Models\Article;
 use App\Models\Category;
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -13,13 +14,13 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 class ProcessArticleJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
+
     public $timeout = 60;
 
     protected array $articleData;
@@ -39,7 +40,7 @@ class ProcessArticleJob implements ShouldQueue
             }
 
             // Create unique hash for deduplication
-            $hash = md5(strtolower($normalized['title']) . strtolower($normalized['source']) . $normalized['url']);
+            $hash = md5(strtolower($normalized['title']).strtolower($normalized['source']).$normalized['url']);
 
             // Prevents duplicates in MongoDB
             if (Article::where('url', $normalized['url'])->exists() || Article::where('hash', $hash)->exists()) {
@@ -50,43 +51,40 @@ class ProcessArticleJob implements ShouldQueue
 
             // 1. Create the Article in MongoDB
             $article = Article::create([
-                'title'        => $normalized['title'],
-                'description'  => $normalized['description'],
-                'content'       => $normalized['content'],
-                'url'           => $normalized['url'],
-                'source'        => $normalized['source'],
-                'published_at'  => Carbon::parse($normalized['published_at']),
-                'category_id'   => $categoryId ? (int) $categoryId : null,
-                'raw'           => $normalized['raw'],
-                'hash'          => $hash,
+                'title' => $normalized['title'],
+                'description' => $normalized['description'],
+                'content' => $normalized['content'],
+                'url' => $normalized['url'],
+                'source' => $normalized['source'],
+                'published_at' => Carbon::parse($normalized['published_at']),
+                'category_id' => $categoryId ? (int) $categoryId : null,
+                'raw' => $normalized['raw'],
+                'hash' => $hash,
             ]);
 
             // 2. Prepare Payload (Force MongoDB ID to string and Category to int)
-             $payload = [
-               'id' => (string) $article->id,
-               'title' => (string) $article->title,
-               'category_id' => (string) ($article->category_id ?? 'general'),
+            $payload = [
+                'id' => (string) $article->id,
+                'title' => (string) $article->title,
+                'category_id' => (string) ($article->category_id ?? 'general'),
             ];
 
-           event(new ArticleCreated($payload));
+            event(new ArticleCreated($payload));
 
             // 3. Fire Broadcast Event
             // Use broadcast() helper to ensure it respects the 'pusher' driver
             event(new ArticleCreated($payload));
 
-            Log::info("SUCCESS: Article stored and broadcast sent for: " . $payload['title']);
+            Log::info('SUCCESS: Article stored and broadcast sent for: '.$payload['title']);
 
             // 4. Clear Cache
             Cache::tags(['feeds'])->flush();
 
         } catch (\Throwable $e) {
-            Log::error("Article processing failed: " . $e->getMessage());
+            Log::error('Article processing failed: '.$e->getMessage());
             $this->fail($e);
         }
     }
-
-
-
 
     private function normalizeData(array $data): array
     {
@@ -125,7 +123,7 @@ class ProcessArticleJob implements ShouldQueue
 
     private function detectCategory(array $data): ?int
     {
-        $text = strtolower($data['title'] . ' ' . $data['description']);
+        $text = strtolower($data['title'].' '.$data['description']);
 
         $categories = Cache::remember('categories_keywords', 3600, function () {
             return Category::all();
@@ -150,10 +148,9 @@ class ProcessArticleJob implements ShouldQueue
     }
 }
 
+// Diferența dintre cele două joburi FetchNewsJob si ProcessArticleJob
+// este una de responsabilitate (Single Responsibility Principle).
+// În esență, primul se ocupă de „aprovizionare”, iar al doilea de „depozitare și organizare”.
 
-//Diferența dintre cele două joburi FetchNewsJob si ProcessArticleJob
-//este una de responsabilitate (Single Responsibility Principle).
-//În esență, primul se ocupă de „aprovizionare”, iar al doilea de „depozitare și organizare”.
-
-//Indiferent de unde vin știrile, la final toate devin un array
-//cu aceleași chei: title, description, content, url, published_at, category, source, raw.1
+// Indiferent de unde vin știrile, la final toate devin un array
+// cu aceleași chei: title, description, content, url, published_at, category, source, raw.1

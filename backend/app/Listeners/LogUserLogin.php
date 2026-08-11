@@ -14,9 +14,9 @@ class LogUserLogin
     {
         Log::info('User logged in', [
             'user_id' => $event->user->id,
-            'email'   => $event->user->email,
-            'time'    => now(),
-            'ip'      => request()->ip(),
+            'email' => $event->user->email,
+            'time' => now(),
+            'ip' => request()->ip(),
         ]);
     }
 }

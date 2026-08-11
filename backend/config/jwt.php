@@ -1,5 +1,9 @@
 <?php
 
+use Tymon\JWTAuth\Providers\Auth\Illuminate;
+use Tymon\JWTAuth\Providers\JWT\Lcobucci;
+use Tymon\JWTAuth\Providers\JWT\Provider;
+
 /*
  * This file is part of jwt-auth.
  *
@@ -102,7 +106,7 @@ return [
     */
 
     'ttl' => 15, // access token (minute)
-'refresh_ttl' => 20160, // 14 zile (minute)
+    'refresh_ttl' => 20160, // 14 zile (minute)
 
     /*
     |--------------------------------------------------------------------------
@@ -121,8 +125,6 @@ return [
     |
     */
 
-
-
     /*
     |--------------------------------------------------------------------------
     | JWT hashing algorithm
@@ -132,7 +134,7 @@ return [
     |
     */
 
-    'algo' => env('JWT_ALGO', Tymon\JWTAuth\Providers\JWT\Provider::ALGO_HS256),
+    'algo' => env('JWT_ALGO', Provider::ALGO_HS256),
 
     /*
     |--------------------------------------------------------------------------
@@ -273,7 +275,7 @@ return [
         |
         */
 
-        'jwt' => Tymon\JWTAuth\Providers\JWT\Lcobucci::class,
+        'jwt' => Lcobucci::class,
 
         /*
         |--------------------------------------------------------------------------
@@ -284,7 +286,7 @@ return [
         |
         */
 
-        'auth' => Tymon\JWTAuth\Providers\Auth\Illuminate::class,
+        'auth' => Illuminate::class,
 
         /*
         |--------------------------------------------------------------------------

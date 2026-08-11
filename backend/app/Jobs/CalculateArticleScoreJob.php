@@ -32,7 +32,6 @@ class CalculateArticleScoreJob implements ShouldQueue
     }
 }
 
-
 // Recent articles always get a real score (no more 0).
 // Old articles still have lower scores because of the recency term.
 // Even if the job hasn't run yet, orderBy('published_at', 'desc') fallback guarantees you see fresh articles in Discover.

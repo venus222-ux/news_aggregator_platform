@@ -1,5 +1,28 @@
 <?php
 
+use App\Providers\AppServiceProvider;
+use Illuminate\Auth\AuthServiceProvider;
+use Illuminate\Auth\Passwords\PasswordResetServiceProvider;
+use Illuminate\Broadcasting\BroadcastServiceProvider;
+use Illuminate\Bus\BusServiceProvider;
+use Illuminate\Cache\CacheServiceProvider;
+use Illuminate\Cookie\CookieServiceProvider;
+use Illuminate\Database\DatabaseServiceProvider;
+use Illuminate\Encryption\EncryptionServiceProvider;
+use Illuminate\Filesystem\FilesystemServiceProvider;
+use Illuminate\Foundation\Providers\ConsoleSupportServiceProvider;
+use Illuminate\Foundation\Providers\FoundationServiceProvider;
+use Illuminate\Hashing\HashServiceProvider;
+use Illuminate\Mail\MailServiceProvider;
+use Illuminate\Notifications\NotificationServiceProvider;
+use Illuminate\Pipeline\PipelineServiceProvider;
+use Illuminate\Queue\QueueServiceProvider;
+use Illuminate\Redis\RedisServiceProvider;
+use Illuminate\Session\SessionServiceProvider;
+use Illuminate\Translation\TranslationServiceProvider;
+use Illuminate\Validation\ValidationServiceProvider;
+use Illuminate\View\ViewServiceProvider;
+
 return [
 
     /*
@@ -123,40 +146,40 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
-      'providers' => [
+    'providers' => [
 
-/*
+        /*
      * Laravel Framework Service Providers...
      */
-    Illuminate\Auth\AuthServiceProvider::class,
-    Illuminate\Broadcasting\BroadcastServiceProvider::class,
-    Illuminate\Bus\BusServiceProvider::class,
-    Illuminate\Cache\CacheServiceProvider::class,
-    Illuminate\Foundation\Providers\ConsoleSupportServiceProvider::class, // <-- important
-    Illuminate\Cookie\CookieServiceProvider::class,
-    Illuminate\Database\DatabaseServiceProvider::class,
-    Illuminate\Encryption\EncryptionServiceProvider::class,
-    Illuminate\Filesystem\FilesystemServiceProvider::class,
-    Illuminate\Foundation\Providers\FoundationServiceProvider::class,
-    Illuminate\Hashing\HashServiceProvider::class,
-    Illuminate\Mail\MailServiceProvider::class,
-    Illuminate\Pipeline\PipelineServiceProvider::class,
-    Illuminate\Queue\QueueServiceProvider::class,
-    Illuminate\Redis\RedisServiceProvider::class,
-    Illuminate\Auth\Passwords\PasswordResetServiceProvider::class,
-    Illuminate\Session\SessionServiceProvider::class,
-    Illuminate\Translation\TranslationServiceProvider::class,
-    Illuminate\Validation\ValidationServiceProvider::class,
-    Illuminate\View\ViewServiceProvider::class,
-    Illuminate\Notifications\NotificationServiceProvider::class,
+        AuthServiceProvider::class,
+        BroadcastServiceProvider::class,
+        BusServiceProvider::class,
+        CacheServiceProvider::class,
+        ConsoleSupportServiceProvider::class, // <-- important
+        CookieServiceProvider::class,
+        DatabaseServiceProvider::class,
+        EncryptionServiceProvider::class,
+        FilesystemServiceProvider::class,
+        FoundationServiceProvider::class,
+        HashServiceProvider::class,
+        MailServiceProvider::class,
+        PipelineServiceProvider::class,
+        QueueServiceProvider::class,
+        RedisServiceProvider::class,
+        PasswordResetServiceProvider::class,
+        SessionServiceProvider::class,
+        TranslationServiceProvider::class,
+        ValidationServiceProvider::class,
+        ViewServiceProvider::class,
+        NotificationServiceProvider::class,
 
-    /*
+        /*
      * Application Service Providers...
      */
-    App\Providers\AppServiceProvider::class,
-    App\Providers\AuthServiceProvider::class,
-    App\Providers\BroadcastServiceProvider::class,
+        AppServiceProvider::class,
+        App\Providers\AuthServiceProvider::class,
+        App\Providers\BroadcastServiceProvider::class,
 
-],
+    ],
 
 ];

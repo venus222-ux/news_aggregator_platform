@@ -9,7 +9,7 @@ class Category extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'slug','embedding'];
+    protected $fillable = ['name', 'slug', 'embedding'];
 
     public function subscribers()
     {
@@ -17,12 +17,11 @@ class Category extends Model
     }
 
     protected $casts = [
-       'keywords' => 'array',
+        'keywords' => 'array',
     ];
 
-
     public function users()
-{
-    return $this->belongsToMany(User::class, 'user_category');
-}
+    {
+        return $this->belongsToMany(User::class, 'user_category');
+    }
 }

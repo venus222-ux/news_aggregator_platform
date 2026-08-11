@@ -1,17 +1,17 @@
 <?php
 
 use App\Http\Controllers\Admin\AnalyticsController;
-use App\Http\Controllers\NewsController;
-use App\Http\Controllers\AuthController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AdminController;
-use App\Http\Controllers\ArticleController;
-use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\Admin\SourceController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\ArticleController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FeedController;
+use App\Http\Controllers\NewsController;
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Route;
 
 Broadcast::routes([
     'middleware' => ['auth:api'],
@@ -25,7 +25,6 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::post('/refresh', [AuthController::class, 'refresh']); // 🧠 Handled outside jwt validation groups
-
 
 /* ========================================================
    🔒 PROTECTED ROUTES (USER & GENERAL)

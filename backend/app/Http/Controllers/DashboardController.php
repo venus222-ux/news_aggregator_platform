@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Auth;
 use App\Models\Article;
 use App\Models\Category;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -15,7 +15,7 @@ class DashboardController extends Controller
         // ✅ 1. Get subscribed category IDs (force STRING for MongoDB)
         $categoryIds = $user->subscriptions()
             ->pluck('categories.id')
-            ->map(fn($id) => (string) $id)
+            ->map(fn ($id) => (string) $id)
             ->toArray();
 
         // 🧪 DEBUG (optional)
@@ -32,7 +32,7 @@ class DashboardController extends Controller
         $articlesQuery = Article::query();
 
         // If user has subscriptions → filter
-        if (!empty($categoryIds)) {
+        if (! empty($categoryIds)) {
             $articlesQuery->whereIn('category_id', $categoryIds);
         }
 
@@ -47,7 +47,7 @@ class DashboardController extends Controller
             $categoryName = 'Uncategorized';
 
             if ($a->category_id) {
-                $category = Category::find((int)$a->category_id);
+                $category = Category::find((int) $a->category_id);
                 $categoryName = $category?->name ?? 'Uncategorized';
             }
 

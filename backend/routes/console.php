@@ -6,16 +6,14 @@ use App\Jobs\FetchNewsJob;
 use Illuminate\Support\Facades\Schedule;
 
 // Use Class Name string instead of "new Job()"
-//Test
+// Test
 Schedule::job(FetchNewsJob::class)
     ->everyFiveMinutes()->withoutOverlapping();
 
-
-//Production
+// Production
 // Schedule::job(FetchNewsJob::class)
 //     ->everyTenMinutes()
 //     ->withoutOverlapping();
-
 
 Schedule::job(CalculateArticleScoreJob::class)
     ->everyTenMinutes()
@@ -23,4 +21,3 @@ Schedule::job(CalculateArticleScoreJob::class)
 
 Schedule::job(ClassifyArticlesAI::class)
     ->everyFiveMinutes();
-

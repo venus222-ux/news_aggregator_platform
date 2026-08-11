@@ -2,7 +2,6 @@
 
 namespace App\Events;
 
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -23,6 +22,7 @@ class ArticleCreated implements ShouldBroadcast
     public function broadcastOn(): array
     {
         $categoryId = $this->article['category_id'] ?? 'general';
+
         return [
             new PrivateChannel("category.{$categoryId}"),
         ];
@@ -36,7 +36,7 @@ class ArticleCreated implements ShouldBroadcast
     public function broadcastWith(): array
     {
         return [
-            'article' => $this->article
+            'article' => $this->article,
         ];
     }
 }

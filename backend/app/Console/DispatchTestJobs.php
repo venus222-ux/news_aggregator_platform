@@ -2,12 +2,13 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Jobs\TestJob;
+use Illuminate\Console\Command;
 
 class DispatchTestJobs extends Command
 {
     protected $signature = 'test:jobs {count=5}';
+
     protected $description = 'Dispatch test jobs to the queue';
 
     public function handle()

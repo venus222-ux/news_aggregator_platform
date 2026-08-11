@@ -2,40 +2,41 @@
 
 namespace App\Models;
 
-use MongoDB\Laravel\Eloquent\Model;
 use Laravel\Scout\Searchable;
+use MongoDB\Laravel\Eloquent\Model;
 
 class Article extends Model
 {
     use Searchable;
 
     protected $connection = 'mongodb';
+
     protected $collection = 'articles';
 
-protected $fillable = [
-    'title',
-    'description',
-    'content',
-    'url',
-    'source',
-    'published_at',
-    'category_id',
-    'raw',
-    'hash',
-    'views',
-    'clicks',
-    'score',
-    'needs_ai', // <--- IMPORTANT: Add this
-];
+    protected $fillable = [
+        'title',
+        'description',
+        'content',
+        'url',
+        'source',
+        'published_at',
+        'category_id',
+        'raw',
+        'hash',
+        'views',
+        'clicks',
+        'score',
+        'needs_ai', // <--- IMPORTANT: Add this
+    ];
 
-protected $casts = [
-    'published_at' => 'datetime',
-    'views' => 'integer',
-    'clicks' => 'integer',
-    'score' => 'float',
-    'needs_ai' => 'boolean', // <--- Add this
-    'category_id' => 'string', // <--- Good for MongoDB compatibility
-];
+    protected $casts = [
+        'published_at' => 'datetime',
+        'views' => 'integer',
+        'clicks' => 'integer',
+        'score' => 'float',
+        'needs_ai' => 'boolean', // <--- Add this
+        'category_id' => 'string', // <--- Good for MongoDB compatibility
+    ];
 
     // Default values for new fields
     protected $attributes = [
@@ -43,8 +44,6 @@ protected $casts = [
         'clicks' => 0,
         'score' => 0,
     ];
-
-
 
     public function searchableAs()
     {
@@ -66,7 +65,4 @@ protected $casts = [
     {
         return $this->belongsTo(Category::class);
     }
-
-
-
 }

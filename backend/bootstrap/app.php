@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\JwtMiddleware;
+use App\Http\Middleware\PrometheusMetricsMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -10,6 +11,7 @@ use Illuminate\Foundation\Http\Middleware\TrimStrings;
 use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Routing\Middleware\ThrottleRequests;
+use Throwable;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,15 +20,11 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-
-    ->withMiddleware(function (Middleware $middleware) {
-         $middleware->append(\App\Http\Middleware\PrometheusMetricsMiddleware::class);
-    })
-
     ->withMiddleware(function (Middleware $middleware): void {
 
         // Global middleware
         $middleware->use([
+            PrometheusMetricsMiddleware::class, // ✅ Adăugat direct în lista principală (sus, pentru acuratețe)
             HandleCors::class,
             TrimStrings::class,
             ConvertEmptyStringsToNull::class,
@@ -44,7 +42,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => AdminMiddleware::class,
         ]);
     })
-
     ->withExceptions(function (Exceptions $exceptions): void {
 
         // Clean JSON errors for API
@@ -60,7 +57,4 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
     })
-
     ->create();
-
-

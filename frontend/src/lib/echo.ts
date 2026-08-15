@@ -9,8 +9,16 @@ let authToken: string | null = null;
 const echo = new Echo({
   broadcaster: "pusher",
   key: import.meta.env.VITE_PUSHER_APP_KEY,
-  cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
-  forceTLS: true,
+  cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER || "mt1", // Fallback de siguranță
+
+  // --- SETĂRI SOKETI (Server Local) ---
+  wsHost: import.meta.env.VITE_PUSHER_HOST || "localhost",
+  wsPort: import.meta.env.VITE_PUSHER_PORT || 6001,
+  wssPort: import.meta.env.VITE_PUSHER_PORT || 6001,
+  forceTLS: false, // Local trebuie să fie false (folosim ws://, nu wss://)
+  disableStats: true, // Previne încercarea Pusher de a trimite statistici în cloud
+  enabledTransports: ["ws", "wss"],
+  // ------------------------------------
 
   authEndpoint: "http://localhost:8000/broadcasting/auth",
 

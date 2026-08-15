@@ -19,6 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
 
+    ->withMiddleware(function (Middleware $middleware) {
+         $middleware->append(\App\Http\Middleware\PrometheusMetricsMiddleware::class);
+    })
+
     ->withMiddleware(function (Middleware $middleware): void {
 
         // Global middleware
@@ -58,3 +62,5 @@ return Application::configure(basePath: dirname(__DIR__))
     })
 
     ->create();
+
+

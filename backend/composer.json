@@ -16,6 +16,7 @@
         "laravel/tinker": "^2.10.1",
         "mongodb/laravel-mongodb": "^5.5",
         "openai-php/laravel": "*",
+        "promphp/prometheus_client_php": "^2.15",
         "pusher/pusher-php-server": "*",
         "spatie/laravel-permission": "^6.24",
         "tymon/jwt-auth": "^2.2"

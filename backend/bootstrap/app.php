@@ -11,7 +11,6 @@ use Illuminate\Foundation\Http\Middleware\TrimStrings;
 use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Routing\Middleware\ThrottleRequests;
-use Throwable;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(

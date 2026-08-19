@@ -1,93 +1,205 @@
-1️⃣ Backend Overview
+═══════════════════════════════════════════════════════════════
+ NEWS AGGREGATOR PLATFORM — OVERVIEW TEHNIC
+═══════════════════════════════════════════════════════════════
+
+1️⃣  BACKEND OVERVIEW
+───────────────────────────────────────────────────────────────
+
 Models
-User → Has JWT auth, Spatie roles (admin/user), subscriptions (belongsToMany Category)
-Category → Stores news categories; tracks subscribers
-Source → Stores news sources (API or RSS)
-Article → MongoDB collection for articles; belongs to Category; stores raw data for reference
+  User        → Auth JWT, roluri Spatie (admin/user), subscriptions
+                (belongsToMany Category)
+  Category    → Stochează categoriile de știri; urmărește abonații
+  Source      → Stochează sursele de știri (API sau RSS)
+  Article     → Colecție MongoDB pentru articole; legată de Category;
+                stochează raw payload pentru referință; hash pentru
+                deduplicare; needs_ai + ai_attempts pentru clasificare
+                AI; score pentru relevanță
 
 Jobs
-FetchNewsJob → Loops sources → fetches RSS or API → dispatches ProcessArticleJob
-ProcessArticleJob → Deduplicates → assigns category → saves article in MongoDB
-Async ensures UI/backend isn’t blocked
+  FetchNewsJob            → Loop prin sources → fetch RSS sau API →
+                             dispatch ProcessArticlesBatchJob
+  ProcessArticlesBatchJob → Deduplicare (hash) → clasificare pe
+                             cuvinte-cheie → salvare Article în
+                             MongoDB → event(ArticleCreated)
+  ProcessArticleJob       → Variantă single-article (folosită separat
+                             de flow-ul batch)
+  ClassifyArticlesAI      → Batch de 10 articole needs_ai=true →
+                             OpenAI API → actualizează category_id
+  CalculateArticleScoreJob → Calculează scor relevanță (integrare
+                             Elasticsearch)
+
+  Toate joburile sunt async (ShouldQueue, coadă Redis) — UI/backend
+  nu sunt blocate de operațiile de fetch/procesare.
+
+Events
+  ArticleCreated  → implements ShouldBroadcast
+                     broadcastOn(): PrivateChannel("category.{id}")
+                     broadcastAs(): 'article.created'
+                     Trimis prin driver 'pusher' → Soketi local
 
 Services
-NewsFetchService → Handles API/RSS fetch logic
-ArticleProcessorService → Normalizes data, detects category
+  AICategoryService    → Interfață cu OpenAI API pentru clasificare
+                          batch de articole
 
 Controllers
-ArticleController → /articles (user feed), /articles/all (explore/admin), /latestAdmin
-CategoryController → CRUD for admin, subscribe/unsubscribe for users
-SourceController → Admin source management
-NewsController → Trigger news fetch (/admin/fetch-news)
+  ArticleController    → /articles (feed user), /articles/all
+                          (explore/admin), /latestAdmin
+  FeedController        → /api/feed (cursor pagination, cache Redis,
+                          filtrat pe subscriptions), /discoverFeed
+                          (articole din categorii nesubscrise, sortat
+                          după score)
+  CategoryController    → CRUD admin, subscribe/unsubscribe user
+  SourceController       → Admin source management
+  NewsController         → Trigger news fetch (/admin/fetch-news)
 
 Routes
-Auth routes: /login, /register, /forgot-password, /reset-password
-Protected: /me, /profile, /dashboard
-Admin-only: /admin/dashboard, /categories, /admin/fetch-news, /admin/sources, /admin/latest-articles
+  Auth:        /login, /register, /forgot-password, /reset-password
+  Protected:   /me, /profile, /dashboard
+  Admin-only:  /admin/dashboard, /categories, /admin/fetch-news,
+               /admin/sources, /admin/latest-articles
+  Broadcasting: /broadcasting/auth (middleware auth:api, definit o
+               singură dată în BroadcastServiceProvider)
 
-2️⃣ Frontend Overview
+
+2️⃣  FRONTEND OVERVIEW
+───────────────────────────────────────────────────────────────
+
 Pages
-Home → Login/Register prompt
-Dashboard → User dashboard
-AdminDashboard → Admin overview with categories, sources, latest article
-CategoryList → Manage subscriptions
+  Home            → Login/Register prompt
+  Dashboard       → User dashboard
+  AdminDashboard  → Admin overview (categorii, surse, ultimul articol)
+  CategoryList    → Management abonamente
+  FeedPage        → Feed cu infinite scroll
 
 Components
-AdminCategories, AdminSources, AdminArticles
-ArticleCard → UI for individual articles
-FeedPage → Infinite scroll feed (planned in Day 8)
+  AdminCategories, AdminSources, AdminArticles
+  ArticleCard     → UI per articol individual
+
+Hooks
+  useCategoryNotifications → Se abonează la canalele private
+                              category.{id} pentru toate categoriile
+                              subscribed ale userului; ascultă
+                              .article.created; afișează notificare
+                              live la primirea evenimentului
 
 Zustand Stores
-useCategoryStore → Categories + subscriptions; handles admin CRUD
-useSubscriptionStore → Quick local state for subscribed categories
-useFeedStore → (planned) will handle articles + infinite scroll
+  useCategoryStore      → Categorii + subscriptions; CRUD admin
+  useSubscriptionStore  → State local rapid pentru categorii
+                           subscribed
+  useFeedStore          → Articole + infinite scroll
+
+Real-time (Echo + Soketi)
+  lib/echo.ts    → Configurare Laravel Echo, broadcaster 'pusher',
+                   wsHost/wsPort custom către Soketi local,
+                   forceTLS: false, enabledTransports: ["ws"]
+                   (NU "wss" — Soketi local nu are certificat TLS)
 
 
-3️⃣ Workflow Summary
-Admin adds sources & categories → saved in MySQL
-Admin triggers news fetch → queued job fetches from API/RSS → ProcessArticleJob saves in MongoDB
-Users subscribe to categories → Zustand keeps track
-Articles displayed → only user’s subscribed categories; optional infinite scroll
-Redis caching (Day 7) → reduces DB queries, auto-invalidated when new articles arrive or subscriptions change
+3️⃣  WORKFLOW SUMMARY
+───────────────────────────────────────────────────────────────
+
+  Admin adaugă sources & categories        → salvate în MySQL
+  Admin declanșează news fetch (sau
+  scheduler automat la 5 min)              → FetchNewsJob în coadă
+  FetchNewsJob                              → ProcessArticlesBatchJob
+                                               salvează în MongoDB
+  Users se abonează la categorii            → Zustand ține evidența
+  Articole afișate                          → doar categoriile
+                                               subscribed ale userului
+  ArticleCreated broadcast                  → notificare live prin
+                                               Soketi, fără refresh
+  Redis caching                             → reduce query-uri DB,
+                                               invalidat la articole
+                                               noi sau schimbări de
+                                               abonament
 
 
+4️⃣  FLOW DIAGRAM (fetch declanșat manual sau automat)
+───────────────────────────────────────────────────────────────
+
+  ┌───────────────────────────┐
+  │   Admin / Scheduler        │
+  │   declanșează fetch        │
+  └─────────────┬───────────────┘
+                │
+                ▼
+  ┌───────────────────────────┐
+  │   FetchNewsJob (Queue)     │
+  │   - Loop prin Source::all  │
+  │   - RSS: parse XML          │
+  │   - API: HTTP request       │
+  │   - dedup pe URL             │
+  └─────────────┬───────────────┘
+                │ dispatch batch
+                ▼
+  ┌────────────────────────────────┐
+  │   ProcessArticlesBatchJob        │
+  │   - dedup pe hash                 │
+  │   - clasificare pe keywords       │
+  │   - salvare Article (MongoDB)     │
+  │   - event(ArticleCreated)          │
+  └─────────────┬────────────────────┘
+                │
+        ┌───────┴────────┐
+        ▼                ▼
+  ┌──────────────┐  ┌─────────────────────┐
+  │ ClassifyArt-  │  │ CalculateArticle-     │
+  │ iclesAI       │  │ ScoreJob               │
+  │ (needs_ai)    │  │ (Elasticsearch)        │
+  └──────────────┘  └─────────────────────┘
+                │
+                ▼
+  ┌───────────────────────────┐
+  │  ArticleCreated broadcast  │
+  │  → Soketi (:6001)           │
+  │  → private-category.{id}    │
+  └─────────────┬───────────────┘
+                │
+                ▼
+  ┌───────────────────────────┐
+  │  Frontend                  │
+  │  useCategoryNotifications  │
+  │  → notificare live, fără    │
+  │    refresh                  │
+  └───────────────────────────┘
 
 
+5️⃣  COMENZI DE REFERINȚĂ
+───────────────────────────────────────────────────────────────
 
-FLOW:
-┌───────────────────────────┐
-│ Admin triggers fetch │
-│ /admin/news/fetch-now │
-└─────────────┬────────────┘
-│
-▼
-┌───────────────────────────┐
-│ NewsController@fetchNow() │
-│ - Dispatch FetchNewsJob │
-└─────────────┬────────────┘
-│
-▼
-┌───────────────────────────┐
-│ FetchNewsJob (Queue) │
-│ - Runs asynchronously │
-│ - Calls NewsFetchService │
-└─────────────┬────────────┘
-│
-▼
-┌───────────────────────────┐
-│ NewsFetchService │
-│ - fetchAll() │
-│ ├─ Fetch API sources │
-│ │ - HTTP request │
-│ │ - Dispatch ProcessArticleJob per article
-│ └─ Fetch RSS sources │
-│ - Parse XML │
-│ - Dispatch ProcessArticleJob per article
-└─────────────┬────────────┘
-│
-▼
-┌───────────────────────────┐
-│ ProcessArticleJob (Queue)│
-│ - Save article to DB │
-│ - Optional analysis, tags │
-└───────────────────────────┘
+  Pornire completă:
+    docker compose up -d --force-recreate
+
+  Status servicii:
+    docker compose ps
+
+  Loguri live:
+    docker compose logs -f laravel_worker
+    docker compose logs -f soketi
+
+  Declanșare fetch manual:
+    docker compose exec laravel_worker php artisan tinker \
+      --execute="App\Jobs\FetchNewsJob::dispatch();"
+
+  Test rapid broadcast (fără fetch real):
+    docker compose exec laravel_worker php artisan tinker \
+      --execute="App\Jobs\ProcessArticlesBatchJob::dispatchSync([
+        ['title'=>'Test','url'=>'https://example.com/t-'.time(),
+         'description'=>'test','source'=>'Manual']]); echo 'DONE';"
+
+  Clear config după schimbări .env:
+    docker compose exec laravel_app php artisan config:clear
+    docker compose exec laravel_worker php artisan config:clear
+    docker compose restart laravel_worker laravel_app
+
+  Horizon UI:
+    http://127.0.0.1:8000/horizon
+
+  Restart curat complet:
+    docker compose down && docker compose up -d --force-recreate
+
+═══════════════════════════════════════════════════════════════
+Pentru istoricul detaliat al problemelor de infrastructură
+identificate și rezolvate în timpul migrării la Docker/WSL2,
+vezi POSTMORTEM.md
+═══════════════════════════════════════════════════════════════

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Schedule;
 // Test
 Schedule::job(FetchNewsJob::class)
     ->everyFiveMinutes()->withoutOverlapping();
-
+ 
 // Production
 // Schedule::job(FetchNewsJob::class)
 //     ->everyTenMinutes()
@@ -21,3 +21,4 @@ Schedule::job(CalculateArticleScoreJob::class)
 
 Schedule::job(ClassifyArticlesAI::class)
     ->everyFiveMinutes();
+ 
